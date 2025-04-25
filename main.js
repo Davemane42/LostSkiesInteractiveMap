@@ -10,10 +10,10 @@ const map = L.map('map', {
   attributionControl: false
 });
 
-
-const bounds = [[0, 0], [20000, 20000]];
-map.setMaxBounds([[-10000, -10000], [bounds[1][0] + 10000 * 2, bounds[1][1] + 10000 * 2]]);
-map.setView([10000, 10000], -4);
+const boundLimit = 10000
+const bounds = [[-15000, -15000], [15000, 15000]];
+map.setMaxBounds([[bounds[0][0]-boundLimit*2, bounds[0][1]-boundLimit], [bounds[1][0] + boundLimit*2, bounds[1][1] + boundLimit]]);
+map.setView([0, 0], -4);
 
 map.on('zoomanim', onZoomAnim);
 map.on('zoomend', onZoomEnd);
@@ -36,7 +36,16 @@ fetchJSON("data/IslandData.json")
 
 function onIslandDataReceived(data) {
   for (let i = 0; i < data.length; i++) {
-    var island = data[i]
+    var island = data[i],
+      cos = Math.cos(Math.PI/2),
+      sin = Math.sin(Math.PI/2),
+      x = (cos * island.X) + (sin * island.Z),
+      z = (cos * island.Z) - (sin * island.X);
+
+    
+    x = Math.round(x * 100) / 100
+    z = Math.round(z * 100) / 100
+    // console.log('{"ID": ' + island.ID + ', "X": '+ x + ', "y": ' + island.Y+  ', "Z": ' + z + '},')
 
     var markerOptions = {
       "fill": true,
@@ -47,14 +56,14 @@ function onIslandDataReceived(data) {
       "opacity": 1,
       "radius": 16
     }
-    var marker = new L.circleMarker([island.X, island.Y], markerOptions).addTo(Layers.markerLayer);
+    var marker = new L.circleMarker([x, z], markerOptions).addTo(Layers.markerLayer);
 
     var image = 'img/' + island.ID + '.webp'
     var myIcon = L.icon({
       iconUrl: image,
       iconSize: [96, 96]
     });
-    var islandMarker = L.marker([island.X, island.Y], { icon: myIcon }).addTo(Layers.islandLayer);
+    var islandMarker = L.marker([x, z], { icon: myIcon }).addTo(Layers.islandLayer);
 
     popup = '<b>#' + island.ID + ' - '
 
@@ -83,7 +92,7 @@ function onIslandDataReceived(data) {
       pane: 'markerPane',
       zIndexOffset: 1000
     }
-    var idMarker = new L.Marker([island.X, island.Y], idMarkerOptions).addTo(map);
+    var idMarker = new L.Marker([x, z], idMarkerOptions).addTo(map);
   }
 }
 
