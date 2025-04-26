@@ -13,9 +13,30 @@ html, body {
 .leaflet-container {
     background: #181425;
 }
-.leaflet-marker-icon {
-    border-radius: 50%;
+/* .island-marker {
+    background-color: #fff;
+} */
+.island-marker h1 {
+    text-wrap: nowrap;
+    font-weight: bold;
+    font-size: medium;
+    color: #fff;
+
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -36px);
 }
+.island-marker img {
+    height: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.island-marker img.rounded {
+    clip-path: circle();
+}
+
 .point-label {
     display: flex;
     justify-content: center;
@@ -27,6 +48,7 @@ html, body {
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #000;
 }
+
 .leaflet-popup-content-wrapper, .leaflet-popup-tip {
     background: #262b44;
     color: #fff;
