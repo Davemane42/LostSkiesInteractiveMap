@@ -40,7 +40,7 @@ asyncFetch("data/IslandData.csv")
 
 function onIslandDataReceived(data) {
   var rows = data.replace(/\r/g, '').split('\n');
-  for (let i = 1; i < data.length; i++) {
+  for (let i = 1; i < rows.length; i++) {
     islandData = rows[i].split(',')
     var island = {
       ID: islandData[0],
@@ -127,7 +127,9 @@ function onIslandDataReceived(data) {
       'Large Chest: ' + (island.Chest!==''?island.Chest:'Not Reported') + '<br>' +
       'Metals: ' + (island.Metals!==''?island.Metals.replace(/;/g, ','):'Not Reported') + '<br>' +
       'Woods: ' + (island.Woods!==''?island.Woods.replace(/;/g, ','):'Not Reported') + '<br>' +
-      '<a href="img/islands/' + island.ID + '.webp" target="_blank"><img src="img/islands/' + island.ID + '_small.webp" width="320"></a><br>'
+      '<a href="img/islands/' + island.ID + '.webp" target="_blank"><img src="img/islands/' + island.ID + '_small.webp" width="320"></a><br>' +
+      '<a href="https://docs.google.com/spreadsheets/d/1SoaG-HGcGH-GMLEnPir8Rq1DSmXzngv1YmK1fNEm_2Y">Report missing info</a>' + ' or ' +
+      '<a href="https://discord.com/channels/947796968669851659/1363502652373209109">Discuss it on the Discord</a>'
 
     var popupOptions = {
       minWidth: '320' 
