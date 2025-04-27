@@ -1,36 +1,36 @@
-ID,Name,Creator,Workshop,X,Y,Z,Difficulty,Ark,Databank,Chest
-1,Tutorial Island V35,devs,,0,0,0,0,TRUE,5,
-2,Shattered Peak,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3102732233,-2358,295,-2101,3,TRUE,6,2
-3,At Journeys End,conceptual charlie,https://steamcommunity.com/sharedfiles/filedetails/?id=3449913241,1229.3,-105,-3921.2,3,FALSE,5,4
-4,Thieves and Retribution,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3449913241,4446.2,189,-1240,8,TRUE,4,
-5,The Spine,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3237775339,2767,341,1861,6,FALSE,5,
-6,Sanctum of the Ancients,devs,,690.9,109,2409.2,3,TRUE,6,
-7,MS4 Island With Puzzles,devs,,-2504,170,1066,4,TRUE,5,
-8,Lode Vein,Cailco,https://steamcommunity.com/sharedfiles/filedetails/?id=3444479582,-5042,-328,2878,6,TRUE,3,4
-9,Saborian Central Park,Bijaz,https://steamcommunity.com/sharedfiles/filedetails/?id=3098332982,-8402,-264.3,2483,9,FALSE,5,
-10,Crystalline Mausoleum,Nausical,https://steamcommunity.com/sharedfiles/filedetails/?id=3444398591,-10830,-225,1089,7,TRUE,4,5
-11,Atlas Isles,Rubin,https://steamcommunity.com/sharedfiles/filedetails/?id=3439618327,-10415,343,4364,7,TRUE,4,4
-12,The Grand Inventor's Mansion,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3175213214,-5738.3,908.9,8042.8,15,TRUE,,
-13,Data Research Facility,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3394775568,-1479.2,398.6,8790.8,12,FALSE,4,5
-14,Harbored Saborian Citadel,fSq,https://steamcommunity.com/sharedfiles/filedetails/?id=3400420682,6321.7,410,8017,12,FALSE,5,6
-15,Friendly Fire,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3106007951,9216.3,877.6,5990.7,11,FALSE,4,3
-16,Atlas Palace,Rubin,https://steamcommunity.com/sharedfiles/filedetails/?id=3448400421,7895.6,542.2,2742.3,10,TRUE,5,4
-17,Mountain Valley,mjukis,https://steamcommunity.com/sharedfiles/filedetails/?id=3398094169,12616,-317,917,7,TRUE,4,
-18,Serene Cove,SirAma3us,https://steamcommunity.com/sharedfiles/filedetails/?id=3390771086,8819.8,373.5,42.3,6,FALSE,2,
-19,Geode Factory,red-moss,https://steamcommunity.com/sharedfiles/filedetails/?id=3448661071,6148,-303,-5418,12,FALSE,4,
-20,The Valve District,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3151082386,7758,445,-8614,15,FALSE,5,
-21,Craco,devs,,5443,323,-10846.8,14,FALSE,5,8
-22,Verdent Valley,Eternz,https://steamcommunity.com/sharedfiles/filedetails/?id=3059296059,1519.2,571.4,-9015.3,13,FALSE,4,
-23,Temple Core,red-moss,https://steamcommunity.com/sharedfiles/filedetails/?id=3441452265,-8284,-279,-8036,14,FALSE,4,5
-24,Traitor's Enclave,Averaxis,https://steamcommunity.com/sharedfiles/filedetails/?id=3420178489,-9157.2,384.3,-1720.7,10,FALSE,1,1
-25,Nature's Respite,Yual,https://steamcommunity.com/sharedfiles/filedetails/?id=3442349154,-6393,219,-1176,6,FALSE,1,0
-26,Tall Trees Director's Cut,MisterFizz,https://steamcommunity.com/sharedfiles/filedetails/?id=3046373042,-6929,-185,-3961,10,FALSE,,
-27,Time Devours All,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3114845536,-4932.8,593.6,-7479.1,12,TRUE,4,
-28,Saborian Training Ground,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3403609733,-792,979,-9214,13,FALSE,5,
-29,THE WELL,bijaz,https://steamcommunity.com/sharedfiles/filedetails/?id=3424633912,-568,185,-6086,10,FALSE,5,
-30,Hermit Hideaway,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3417331872,3675,-309.2,-6061.6,10,FALSE,4,
-31,Toppled,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3426300921,9258.8,0,-3186.3,10,TRUE,4,
-32,Ravara,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3139350064,4727.7,-87,5297.9,8,FALSE,5,
-33,Temple Down,red-moss,https://steamcommunity.com/sharedfiles/filedetails/?id=3436028909,2800.5,224.4,9072.7,14,FALSE,4,4
-34,Hanging Village of Ranva,Abyzmi,https://steamcommunity.com/sharedfiles/filedetails/?id=3416582654,646.3,803,6000,10,FALSE,4,3
-35,Portamis,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3053761470,-2067.2,10.5,5939.6,9,FALSE,4,4
+ID,Name,Creator,Workshop,X,Y,Z,Difficulty,Ark,Databank,Chest,Metals,Woods
+1,Tutorial Island V35,devs,,0,0,0,0,TRUE,5,,Iron; Copper,Pine
+2,Shattered Peak,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3102732233,-2358,295,-2101,3,TRUE,6,2,Lead; Copper,Birch; Pine
+3,At Journeys End,conceptual charlie,https://steamcommunity.com/sharedfiles/filedetails/?id=3449913241,1229.3,-105,-3921.2,3,FALSE,5,4,Iron; Tin; Zinc,
+4,Thieves and Retribution,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3449913241,4446.2,189,-1240,8,FALSE,4,,Zinc,Pillar Pine
+5,The Spine,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3237775339,2767,341,1861,6,FALSE,5,,,
+6,Sanctum of the Ancients,devs,,690.9,109,2409.2,3,TRUE,6,,Tin; Copper; Iron; Lead,Pine; Pure pine
+7,MS4 Island With Puzzles,devs,,-2504,170,1066,4,TRUE,5,,,
+8,Lode Vein,Cailco,https://steamcommunity.com/sharedfiles/filedetails/?id=3444479582,-5042,-328,2878,6,TRUE,3,4,Iron; Lead; Tin,
+9,Saborian Central Park,Bijaz,https://steamcommunity.com/sharedfiles/filedetails/?id=3098332982,-8402,-264.3,2483,9,FALSE,5,,Iron;,Pillar Pine; Night Birch Wood
+10,Crystalline Mausoleum,Nausical,https://steamcommunity.com/sharedfiles/filedetails/?id=3444398591,-10830,-225,1089,7,TRUE,4,5,,
+11,Atlas Isles,Rubin,https://steamcommunity.com/sharedfiles/filedetails/?id=3439618327,-10415,343,4364,7,TRUE,4,4,,
+12,The Grand Inventor's Mansion,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3175213214,-5738.3,908.9,8042.8,15,TRUE,2,2,Tin,
+13,Data Research Facility,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3394775568,-1479.2,398.6,8790.8,12,FALSE,4,5,,
+14,Harbored Saborian Citadel,fSq,https://steamcommunity.com/sharedfiles/filedetails/?id=3400420682,6321.7,410,8017,12,FALSE,5,6,Pure Aluminium; Aluminium; Zinc; Silver,Apotheon Pine; Pure Apotheon Pine
+15,Friendly Fire,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3106007951,9216.3,877.6,5990.7,11,FALSE,4,3,Tin; Aluminum,Redusian Birch; Apolleon Pine
+16,Atlas Palace,Rubin,https://steamcommunity.com/sharedfiles/filedetails/?id=3448400421,7895.6,542.2,2742.3,10,TRUE,5,4,Zinc; Tin,Pure Night Birch; Night Birch; Pillar Pine
+17,Mountain Valley,mjukis,https://steamcommunity.com/sharedfiles/filedetails/?id=3398094169,12616,-317,917,7,TRUE,4,5,Pure Iron; Iron; Pure Tin; Tin; Copper; Lead,Pine; Flawless Birch; Birch
+18,Serene Cove,SirAma3us,https://steamcommunity.com/sharedfiles/filedetails/?id=3390771086,8819.8,373.5,42.3,6,FALSE,2,0,Tin,Pine Wood
+19,Geode Factory,red-moss,https://steamcommunity.com/sharedfiles/filedetails/?id=3448661071,6148,-303,-5418,12,FALSE,4,,Aluminium was reported but I only found zinc 4.26.25,Apotheon Pine; Pure Apotheon Pine; Redusian Birch Wood; Pure Redusian Birch Wood
+20,The Valve District,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3151082386,7758,445,-8614,15,FALSE,5,,,
+21,Craco,devs,,5443,323,-10846.8,14,FALSE,5,8,Tin; Zinc,Apotheon Pine; Pure Apotheon Pine
+22,Verdent Valley,Eternz,https://steamcommunity.com/sharedfiles/filedetails/?id=3059296059,1519.2,571.4,-9015.3,13,FALSE,4,5,Zinc; Silver; Pure Silver; Aluminum,
+23,Temple Core,red-moss,https://steamcommunity.com/sharedfiles/filedetails/?id=3441452265,-8284,-279,-8036,14,FALSE,4,5,Aluminium; Silver; Tin; Pure Aluminium; Pure Silver,Apotheon Pine; Pure Apotheon
+24,Traitor's Enclave,Averaxis,https://steamcommunity.com/sharedfiles/filedetails/?id=3420178489,-9157.2,384.3,-1720.7,10,FALSE,1,1,Zinc; Tin,Pillar Pine; Night Birch
+25,Nature's Respite,Yual,https://steamcommunity.com/sharedfiles/filedetails/?id=3442349154,-6393,219,-1176,6,FALSE,1,0,None,Birch
+26,Tall Trees Director's Cut,MisterFizz,https://steamcommunity.com/sharedfiles/filedetails/?id=3046373042,-6929,-185,-3961,10,FALSE,5,3,Zinc,Pillar Pine
+27,Time Devours All,djvirus,https://steamcommunity.com/sharedfiles/filedetails/?id=3114845536,-4932.8,593.6,-7479.1,12,TRUE,4,,Silver; Zinc; Copper,
+28,Saborian Training Ground,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3403609733,-792,979,-9214,13,FALSE,5,,Aluminium; Zinc; Silver,Redusian Birch
+29,THE WELL,bijaz,https://steamcommunity.com/sharedfiles/filedetails/?id=3424633912,-568,185,-6086,10,FALSE,5,,Copper; Iron,QQ
+30,Hermit Hideaway,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3417331872,3675,-309.2,-6061.6,10,FALSE,4,,Tin,Pillar Pine;
+31,Toppled,Dryft,https://steamcommunity.com/sharedfiles/filedetails/?id=3426300921,9258.8,0,-3186.3,10,TRUE,4,,Tin,Night Birch; Pure Nigh Birch; Pillar Pine
+32,Ravara,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3139350064,4727.7,-87,5297.9,8,FALSE,5,,Iron; Zinc; Pure Zinc,Night Birch Wood; Pure Night Birch Wood
+33,Temple Down,red-moss,https://steamcommunity.com/sharedfiles/filedetails/?id=3436028909,2800.5,224.4,9072.7,14,FALSE,4,4,Pure Aluminium; Tin,Apotheon Pine; Redusian Birch
+34,Hanging Village of Ranva,Abyzmi,https://steamcommunity.com/sharedfiles/filedetails/?id=3416582654,646.3,803,6000,10,FALSE,4,3,Zinc,
+35,Portamis,UgLY,https://steamcommunity.com/sharedfiles/filedetails/?id=3053761470,-2067.2,10.5,5939.6,9,FALSE,4,4,Zinc,

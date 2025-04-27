@@ -39,8 +39,7 @@ asyncFetch("data/IslandData.csv")
 
 
 function onIslandDataReceived(data) {
-  console.log(data)
-  var rows = data.split('\n');
+  var rows = data.replace(/\r/g, '').split('\n');
   for (let i = 1; i < data.length; i++) {
     islandData = rows[i].split(',')
     var island = {
@@ -54,7 +53,9 @@ function onIslandDataReceived(data) {
       Difficulty: islandData[7],
       Ark: islandData[8],
       Databank: islandData[9],
-      Chest: islandData[10]
+      Chest: islandData[10],
+      Metals: islandData[11],
+      Woods: islandData[12]
     }
 
 
@@ -82,11 +83,10 @@ function onIslandDataReceived(data) {
     var basicMarker = new L.circleMarker([island.X, island.Z], basicMarkerOptions).addTo(Layers.markerLayer);
 
     // Island
-    var image = 'img/' + island.ID + '.webp'
     var islandIcon = L.divIcon({
       iconSize: [96, 96],
       className: 'island-marker',
-      html: '<img class="rounded" src="'+image+'"/>'
+      html: '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
     })
     var islandMarker = L.marker([island.X, island.Z], { icon: islandIcon }).addTo(Layers.islandLayer);
 
@@ -104,7 +104,7 @@ function onIslandDataReceived(data) {
     var zoomedIslandIcon = L.divIcon({
       iconSize: [96, 96],
       className: 'island-marker',
-      html: '<h1>' + island.ID + ' - ' + island.Name + '</h1>' + '<img src="'+image+'"/>'
+      html: '<h1>' + island.ID + ' - ' + island.Name + '</h1>' + '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
             
     })
     var zoomedIslandMarker = new L.Marker([island.X, island.Z], { icon: zoomedIslandIcon }).addTo(Layers.zoomedIslandLayer);
@@ -112,7 +112,7 @@ function onIslandDataReceived(data) {
     // Popup
     popup = '<b>#' + island.ID + ' - '
 
-    if (island.Workshop != null) {
+    if (island.Workshop != '') {
       popup += '<a href="' + island.Workshop + '" target="_blank">' + island.Name + '</a>'
     } else {
       popup += island.Name
@@ -123,11 +123,11 @@ function onIslandDataReceived(data) {
     popup += 'By: ' + island.Creator + '<br><br>' +
       'Altitute: ' + (1200+Math.round(island.Y/100)*100) +'m<br>'+
       'Has an Ark: ' + (island.hasArk ? "✅" : "❌") + '<br>' +
-      'Databanks: ' + island.Databank + '<br>' +
-      'Large Chest: ' + island.LargeChest + '<br>' +
-      // 'Metals: ' + island.Metals + '<br>' +
-      // 'Woods: ' + island.Woods + '<br>' +
-      '<img src="' + image + '" width="320"><br>'
+      'Databanks: ' + (island.Databank!==''?island.Databank:'Not Reported') + '<br>' +
+      'Large Chest: ' + (island.Chest!==''?island.Chest:'Not Reported') + '<br>' +
+      'Metals: ' + (island.Metals!==''?island.Metals.replace(/;/g, ','):'Not Reported') + '<br>' +
+      'Woods: ' + (island.Woods!==''?island.Woods.replace(/;/g, ','):'Not Reported') + '<br>' +
+      '<a href="img/islands/' + island.ID + '.webp" target="_blank"><img src="img/islands/' + island.ID + '_small.webp" width="320"></a><br>'
 
     var popupOptions = {
       minWidth: '320' 
