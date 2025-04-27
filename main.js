@@ -128,8 +128,8 @@ function onIslandDataReceived(data) {
       'Metals: ' + (island.Metals!==''?island.Metals.replace(/;/g, ','):'Not Reported') + '<br>' +
       'Woods: ' + (island.Woods!==''?island.Woods.replace(/;/g, ','):'Not Reported') + '<br>' +
       '<a href="img/islands/' + island.ID + '.webp" target="_blank"><img src="img/islands/' + island.ID + '_small.webp" width="320"></a><br>' +
-      '<a href="https://docs.google.com/spreadsheets/d/1SoaG-HGcGH-GMLEnPir8Rq1DSmXzngv1YmK1fNEm_2Y">Report missing info</a>' + ' or ' +
-      '<a href="https://discord.com/channels/947796968669851659/1363502652373209109">Discuss it on Discord</a>'
+      '<a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a>' + ' or ' +
+      '<a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>'
 
     var popupOptions = {
       minWidth: '320' 
