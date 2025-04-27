@@ -28,6 +28,53 @@ Layers.markerLayer = new L.LayerGroup();
 Layers.islandLayer.addTo(map);
 Layers.labelLayer.addTo(map);
 
+L.control.mousePosition({separator: ',', lngFirst: true, numDigits: -1}).addTo(map);
+
+var searchControl = new L.Control.Search({
+  layer: Layers.zoomedIslandLayer,
+  propertyName: 'name',
+  textPlaceholder: 'Search island...',
+  textErr: 'Island not found',
+  marker: false,
+  initial: false,
+  moveToLocation: function(latlng, title, map) {
+    Zoom = -3
+    map.setView(latlng, -3);
+  },
+  buildTip: function(text, val) {
+    var layer = val.layer;
+    return '<a href="#" class="search-tip">' +
+           '<b>' + layer.options.id + ' - ' + layer.options.name + '</b><br/>' +
+           'By: ' + layer.options.creator + 
+           '</a>';
+  },
+  filterData: function(text, records) {
+    var filteredResults = {};
+    var searchText = text.toLowerCase()
+
+    Object.keys(records).forEach(function(key) {
+      var props = records[key].layer.options
+      if (
+        props.name.toLowerCase().includes(searchText) ||
+        props.creator.toLowerCase().includes(searchText) ||
+        props.id.toLowerCase().includes(searchText)
+      ) {
+        filteredResults[key] = records[key]
+      }
+    });
+
+    return filteredResults
+  }
+});
+searchControl.on('search:locationfound', function(e) {
+  setTimeout(function(){
+    e.layer.openPopup();
+  }, 300);
+})
+
+searchControl.addTo(map);
+map.removeLayer(Layers.zoomedIslandLayer); // search add the layer for some reason?
+
 
 map.getRenderer(map).options.padding = 100;
 
@@ -85,6 +132,7 @@ function onIslandDataReceived(data) {
     // Island
     var islandIcon = L.divIcon({
       iconSize: [96, 96],
+      popupAnchor:[0, -48],
       className: 'island-marker',
       html: '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
     })
@@ -101,13 +149,18 @@ function onIslandDataReceived(data) {
     var idMarker = new L.Marker([island.X, island.Z], idMarkerOptions).addTo(Layers.labelLayer);
 
     // Zoomed in island
-    var zoomedIslandIcon = L.divIcon({
-      iconSize: [96, 96],
-      className: 'island-marker',
-      html: '<h1>' + island.ID + ' - ' + island.Name + '</h1>' + '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
-            
-    })
-    var zoomedIslandMarker = new L.Marker([island.X, island.Z], { icon: zoomedIslandIcon }).addTo(Layers.zoomedIslandLayer);
+    var zoomedIslandOptions = {
+      icon: L.divIcon({
+        iconSize: [96, 96],
+        className: 'island-marker',
+        html: '<h1>' + island.ID + ' - ' + island.Name + '</h1>' + '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
+              
+      }),
+      name: island.Name,
+      id: island.ID,
+      creator: island.Creator
+    }
+    var zoomedIslandMarker = new L.Marker([island.X, island.Z], zoomedIslandOptions).addTo(Layers.zoomedIslandLayer);
 
     // Popup
     popup = '<b>#' + island.ID + ' - '
@@ -195,6 +248,10 @@ function getDifficultyName(difficulty) {
     return 'easy'
   }
   return 'ERROR'
+}
+
+function onZoomStart(e) {
+  Zoom = e.zoom;
 }
 
 function onZoomAnim(e) {
