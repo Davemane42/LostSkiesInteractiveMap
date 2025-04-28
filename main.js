@@ -12,7 +12,7 @@ const map = L.map('map', {
 
 const boundLimit = 10000
 const bounds = [[-15000, -15000], [15000, 15000]];
-map.setMaxBounds([[bounds[0][0]-boundLimit*2, bounds[0][1]-boundLimit], [bounds[1][0] + boundLimit*2, bounds[1][1] + boundLimit]]);
+map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
 map.setView([0, 0], Zoom);
 
 map.on('zoomanim', onZoomAnim);
@@ -28,7 +28,7 @@ Layers.markerLayer = new L.LayerGroup();
 Layers.islandLayer.addTo(map);
 Layers.labelLayer.addTo(map);
 
-L.control.mousePosition({separator: ',', lngFirst: true, numDigits: -1}).addTo(map);
+L.control.mousePosition({ separator: ',', lngFirst: true, numDigits: -1 }).addTo(map);
 
 var searchControl = new L.Control.Search({
   layer: Layers.zoomedIslandLayer,
@@ -37,22 +37,22 @@ var searchControl = new L.Control.Search({
   textErr: 'Island not found',
   marker: false,
   initial: false,
-  moveToLocation: function(latlng, title, map) {
+  moveToLocation: function (latlng, title, map) {
     Zoom = -3
     map.setView(latlng, -3);
   },
-  buildTip: function(text, val) {
+  buildTip: function (text, val) {
     var layer = val.layer;
     return '<a href="#" class="search-tip">' +
-           '<b>' + layer.options.id + ' - ' + layer.options.name + '</b><br/>' +
-           'By: ' + layer.options.creator + 
-           '</a>';
+      '<b>' + layer.options.id + ' - ' + layer.options.name + '</b><br/>' +
+      'By: ' + layer.options.creator +
+      '</a>';
   },
-  filterData: function(text, records) {
+  filterData: function (text, records) {
     var filteredResults = {};
     var searchText = text.toLowerCase()
 
-    Object.keys(records).forEach(function(key) {
+    Object.keys(records).forEach(function (key) {
       var props = records[key].layer.options
       if (
         props.name.toLowerCase().includes(searchText) ||
@@ -66,8 +66,8 @@ var searchControl = new L.Control.Search({
     return filteredResults
   }
 });
-searchControl.on('search:locationfound', function(e) {
-  setTimeout(function(){
+searchControl.on('search:locationfound', function (e) {
+  setTimeout(function () {
     e.layer.openPopup();
   }, 300);
 })
@@ -81,130 +81,150 @@ map.getRenderer(map).options.padding = 100;
 
 L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
 
-asyncFetch("data/IslandData.csv")
-  .then(data => onIslandDataReceived(data))
+// asyncFetch("data/IslandData.csv")
+//   .then(data => onIslandDataReceived(data))
+asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vR6tqFj6KVN9H0WC9uLtJGuXzWN6zCiGNZQNMeWDl9HixL0Lf_dzvowD6-E6cexYyUFm1vU-w6Sf-m3/pub?gid=0&single=true&output=csv')
+  .then(csv => parseSheetCSV(csv))
 
 
-function onIslandDataReceived(data) {
-  var rows = data.replace(/\r/g, '').split('\n');
-  for (let i = 1; i < rows.length; i++) {
-    islandData = rows[i].split(',')
-    var island = {
-      ID: islandData[0],
-      Name: islandData[1],
-      Creator: islandData[2],
-      Workshop: islandData[3],
-      X: islandData[4],
-      Y: islandData[5],
-      Z: islandData[6],
-      Difficulty: islandData[7],
-      Ark: islandData[8],
-      Databank: islandData[9],
-      Chest: islandData[10],
-      Metals: islandData[11],
-      Woods: islandData[12]
+function parseSheetCSV(csv) {
+  var rows = csv.replace(/\r/g, '').split('\n');
+  if (rows[2] != 'Island No,Island,Created By,Link,GameX,GameY,GameZ,Altitude,Difficulty,Databanks,Has Ark,Metals,Wood,Plants,Items,Animals,Items from Chests,Large Chests,Num Puzzles,Fully Explored,Description') {
+    console.error('Sheet Format changed');
+    return
+  }
+  for (let i = 3; i < rows.length; i++) {
+    const regex = /(?:,|^)("(?:(?:"")*[^"]*)*"|[^",]*)/g;
+    const values = [];
+    let match;
+
+    while ((match = regex.exec(rows[i]))) {
+      let value = match[1];
+      if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.substring(1, value.length - 1);
+      }
+      values.push(value);
     }
 
-
-    // var cos = Math.cos(Math.PI/2)
-    // var sin = Math.sin(Math.PI/2)
-    // var x = (cos * island.X) + (sin * island.Z)
-    // var z = (cos * island.Z) - (sin * island.X)
-    // x = Math.round(x * 100) / 100
-    // z = Math.round(z * 100) / 100
-    // console.log('{"ID": ' + island.ID + ', "X": '+ x + ', "y": ' + island.Y+  ', "Z": ' + z + '},')
-
-    var color = getDifficultyColor(island.Difficulty)
-    var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0'+Math.min(255, Math.max(0, parseInt(colorComponent, 16) -64)).toString(16)).substr(-2));
-    
-
-    var basicMarkerOptions = {
-      "fill": true,
-      "fillColor": color,
-      "fillOpacity": 1,
-      "stroke": true,
-      "color": darkenColor,
-      "opacity": 1,
-      "radius": 16
-    }
-    var basicMarker = new L.circleMarker([island.X, island.Z], basicMarkerOptions).addTo(Layers.markerLayer);
-
-    // Island
-    var islandIcon = L.divIcon({
-      iconSize: [96, 96],
-      popupAnchor:[0, -48],
-      className: 'island-marker',
-      html: '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
-    })
-    var islandMarker = L.marker([island.X, island.Z], { icon: islandIcon }).addTo(Layers.islandLayer);
-
-
-    // ID Marker
-    var idMarkerOptions = {
-      "interactive": false,
-      icon: new L.divIcon({ html: island.ID, className: 'point-label' }),
-      pane: 'markerPane',
-      zIndexOffset: 1000
-    }
-    var idMarker = new L.Marker([island.X, island.Z], idMarkerOptions).addTo(Layers.labelLayer);
-
-    // Zoomed in island
-    var zoomedIslandOptions = {
-      icon: L.divIcon({
-        iconSize: [96, 96],
-        className: 'island-marker',
-        html: '<h1>' + island.ID + ' - ' + island.Name + '</h1>' + '<img src="'+'img/islands/' + island.ID + '_square.webp'+'"/>'
-              
-      }),
-      name: island.Name,
-      id: island.ID,
-      creator: island.Creator
-    }
-    var zoomedIslandMarker = new L.Marker([island.X, island.Z], zoomedIslandOptions).addTo(Layers.zoomedIslandLayer);
-
-    // Popup
-    popup = '<b>#' + island.ID + ' - '
-
-    if (island.Workshop != '') {
-      popup += '<a href="' + island.Workshop + '" target="_blank">' + island.Name + '</a>'
-    } else {
-      popup += island.Name
+    if (values[0] == '') {
+      continue
     }
 
-    popup += ' - <span style="color:'+color+'">' + island.Difficulty + ' ' + getDifficultyName(island.Difficulty) +'<span/></b><br>'
-
-    popup += 'By: ' + island.Creator + '<br><br>' +
-      'Altitute: ' + (1200+Math.round(island.Y/100)*100) +'m<br>'+
-      'Has an Ark: ' + (island.Ark=='TRUE' ? "✅" : "❌") + '<br>' +
-      'Databanks: ' + (island.Databank!==''?island.Databank:'Not Reported') + '<br>' +
-      'Large Chest: ' + (island.Chest!==''?island.Chest:'Not Reported') + '<br>' +
-      'Metals: ' + (island.Metals!==''?island.Metals.replace(/;/g, ','):'Not Reported') + '<br>' +
-      'Woods: ' + (island.Woods!==''?island.Woods.replace(/;/g, ','):'Not Reported') + '<br>' +
-      '<a href="img/islands/' + island.ID + '.webp" target="_blank"><img src="img/islands/' + island.ID + '_small.webp" width="320"></a><br>' +
-      '<a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a>' + ' or ' +
-      '<a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>'
-
-    var popupOptions = {
-      minWidth: '320' 
+    var islandData = {
+      ID: values[0],
+      Name: values[1],
+      Creator: values[2],
+      Workshop: values[3],
+      X: values[4],
+      Y: values[5],
+      Z: values[6],
+      Difficulty: values[8].replace(/[^0-9]/g, ''),
+      Databank: values[9],
+      Ark: values[10],
+      Metals: values[11],
+      Woods: values[12],
+      Plants: values[13],
+      Items: values[14],
+      Animals: values[15],
+      Chest: values[17],
+      Description: values[20]
     }
-
-    basicMarker.bindPopup(popup, popupOptions);
-    islandMarker.bindPopup(popup, popupOptions);
-    zoomedIslandMarker.bindPopup(popup, popupOptions);
+    createIslandMarkers(islandData)
   }
 }
 
-async function fetchJSON(url) {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching JSON:', error);
+function createIslandMarkers(islandData) {
+
+  var cos = Math.cos(Math.PI/2)
+  var sin = Math.sin(Math.PI/2)
+  var x = (cos * islandData.X) + (sin * islandData.Z)
+  var z = (cos * islandData.Z) - (sin * islandData.X)
+  islandData.X = Math.round(x * 100) / 100
+  islandData.Z = Math.round(-z * 100) / 100
+
+  var color = getDifficultyColor(islandData.Difficulty)
+  var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
+
+
+  var basicMarkerOptions = {
+    "fill": true,
+    "fillColor": color,
+    "fillOpacity": 1,
+    "stroke": true,
+    "color": darkenColor,
+    "opacity": 1,
+    "radius": 16
   }
+  var basicMarker = new L.circleMarker([islandData.X, islandData.Z], basicMarkerOptions).addTo(Layers.markerLayer);
+
+  // Island
+  var islandIcon = L.divIcon({
+    iconSize: [96, 96],
+    popupAnchor: [0, -48],
+    className: 'island-marker',
+    html: '<img src="' + 'img/islands/' + islandData.ID + '_square.webp' + '"/>'
+  })
+  var islandMarker = L.marker([islandData.X, islandData.Z], { icon: islandIcon }).addTo(Layers.islandLayer);
+
+
+  // ID Marker
+  var idMarkerOptions = {
+    "interactive": false,
+    icon: new L.divIcon({ html: islandData.ID, className: 'point-label' }),
+    pane: 'markerPane',
+    zIndexOffset: 1000
+  }
+  var idMarker = new L.Marker([islandData.X, islandData.Z], idMarkerOptions).addTo(Layers.labelLayer);
+
+  // Zoomed in island
+  var zoomedIslandOptions = {
+    icon: L.divIcon({
+      iconSize: [96, 96],
+      className: 'island-marker',
+      html: '<h1>' + islandData.ID + ' - ' + islandData.Name + '</h1>' + '<img src="' + 'img/islands/' + islandData.ID + '_square.webp' + '"/>'
+
+    }),
+    name: islandData.Name,
+    id: islandData.ID,
+    creator: islandData.Creator
+  }
+  var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandOptions).addTo(Layers.zoomedIslandLayer);
+
+  // Popup
+  popup = '<b>#' + islandData.ID + ' - '
+
+  if (islandData.Workshop != '') {
+    popup += '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>'
+  } else {
+    popup += islandData.Name
+  }
+
+  popup += ' - <span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/></b><br>'
+
+  
+  popup += '<b>By:</b> ' + islandData.Creator + '<br><br>' +
+    (islandData.Description !== '' ? '<details><summary>Description:</summary>'+islandData.Description+'</details><br>':'') +
+    '<b>Altitute:</b> ' + (1200 + Math.round(islandData.Y / 100) * 100) + 'm<br>' +
+    '<b>Has an Ark:</b> ' + (islandData.Ark == 'TRUE' ? "✅" : "❌") + '<br>' +
+    '<b>Databanks:</b> ' + (islandData.Databank !== '' ? islandData.Databank : 'Not Reported') + '<br>' +
+    '<b>Large Chest:</b> ' + (islandData.Chest !== '' ? islandData.Chest : 'Not Reported') + '<br><br>' +
+    '<b>The following items are not a complete list:</b><br>' +
+    '<b>Metals:</b> ' + (islandData.Metals !== '' ? islandData.Metals : 'Not Reported') + '<br>' +
+    '<b>Woods:</b> ' + (islandData.Woods !== '' ? islandData.Woods : 'Not Reported') + '<br>' +
+    '<b>Plants:</b> ' + (islandData.Plants !== '' ? islandData.Plants : 'Not Reported') + '<br>' +
+    '<b>Animals:</b> ' + (islandData.Animals !== '' ? islandData.Animals : 'Not Reported') + '<br>' +
+    '<b>Items:</b> ' + (islandData.Items !== '' ? islandData.Items : 'Not Reported') + '<br>' +
+    '<a href="img/islands/' + islandData.ID + '.webp" target="_blank"><img src="img/islands/' + islandData.ID + '_small.webp" width="320"></a><br>' +
+    '<a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a>' + ' or ' +
+    '<a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>'
+
+  var popupOptions = {
+    minWidth: '320'
+  }
+
+  basicMarker.bindPopup(popup, popupOptions);
+  islandMarker.bindPopup(popup, popupOptions);
+  zoomedIslandMarker.bindPopup(popup, popupOptions);
 }
 
 async function asyncFetch(url) {
