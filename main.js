@@ -89,24 +89,11 @@ asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vR6tqFj6KVN9H0WC9uLt
 
 function parseSheetCSV(csv) {
   var rows = csv.replace(/\r/g, '').split('\n');
-  if (rows[2] != 'Island No,Island,Created By,Link,GameX,GameY,GameZ,Altitude,Difficulty,Databanks,Has Ark,Metals,Wood,Plants,Items,Animals,Items from Chests,Large Chests,Num Puzzles,Fully Explored,Description') {
-    console.error('Sheet Format changed');
-    return
-  }
-  for (let i = 3; i < rows.length; i++) {
-    const regex = /(?:,|^)("(?:(?:"")*[^"]*)*"|[^",]*)/g;
-    const values = [];
-    let match;
+  for (let i = 0; i < rows.length; i++) {
+    var regex = /(?:,|^)("(?:(?:"")*[^"]*)*"|[^",]*)/g;
+    var values = [...rows[i].matchAll(regex)].map(m => m[1].replace(/"/g, ''));
 
-    while ((match = regex.exec(rows[i]))) {
-      let value = match[1];
-      if (value.startsWith('"') && value.endsWith('"')) {
-        value = value.substring(1, value.length - 1);
-      }
-      values.push(value);
-    }
-
-    if (values[0] == '') {
+    if (values[0] == '' || isNaN(values[0])) {
       continue
     }
 
@@ -114,7 +101,7 @@ function parseSheetCSV(csv) {
       ID: values[0],
       Name: values[1],
       Creator: values[2],
-      Workshop: values[3],
+      Workshop: (values[3] == 'missing in workshop' ? '' : values[3]),
       X: values[4],
       Y: values[5],
       Z: values[6],
@@ -135,8 +122,8 @@ function parseSheetCSV(csv) {
 
 function createIslandMarkers(islandData) {
 
-  var cos = Math.cos(Math.PI/2)
-  var sin = Math.sin(Math.PI/2)
+  var cos = Math.cos(Math.PI / 2)
+  var sin = Math.sin(Math.PI / 2)
   var x = (cos * islandData.X) + (sin * islandData.Z)
   var z = (cos * islandData.Z) - (sin * islandData.X)
   islandData.X = Math.round(x * 100) / 100
@@ -201,9 +188,9 @@ function createIslandMarkers(islandData) {
 
   popup += ' - <span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/></b><br>'
 
-  
+
   popup += '<b>By:</b> ' + islandData.Creator + '<br><br>' +
-    (islandData.Description !== '' ? '<details><summary>Description:</summary>'+islandData.Description+'</details><br>':'') +
+    (islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '') +
     '<b>Altitute:</b> ' + (1200 + Math.round(islandData.Y / 100) * 100) + 'm<br>' +
     '<b>Has an Ark:</b> ' + (islandData.Ark == 'TRUE' ? "✅" : "❌") + '<br>' +
     '<b>Databanks:</b> ' + (islandData.Databank !== '' ? islandData.Databank : 'Not Reported') + '<br>' +
@@ -241,33 +228,17 @@ async function asyncFetch(url) {
 }
 
 function getDifficultyColor(difficulty) {
-  if (difficulty >= 14) {
-    // Very-Hard
-    return '#e43b44'
-  } else if (difficulty >= 11) {
-    // Hard
-    return '#f77622'
-  } else if (difficulty >= 8) {
-    // Medium
-    return '#feae34'
-  } else if (difficulty >= 0) {
-    // Easy
-    return '#63c74d'
-  }
-  return '#2ce8f5'
+  if (difficulty < 8) { return '#63c74d' }  // Easy
+  if (difficulty < 11) { return '#feae34' } // Medium
+  if (difficulty < 14) { return '#f77622' } // Hard
+  return '#e43b44'                          // Very-Hard
 }
 
 function getDifficultyName(difficulty) {
-  if (difficulty >= 14) {
-    return 'VeryHard'
-  } else if (difficulty >= 11) {
-    return 'Hard'
-  } else if (difficulty >= 8) {
-    return 'Medium'
-  } else if (difficulty >= 0) {
-    return 'easy'
-  }
-  return 'ERROR'
+  if (difficulty < 8) { return 'Easy' }
+  if (difficulty < 11) { return 'Medium' }
+  if (difficulty < 14) { return 'Hard' }
+  return 'VeryHard'
 }
 
 function onZoomStart(e) {
