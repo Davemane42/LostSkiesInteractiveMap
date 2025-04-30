@@ -10,23 +10,27 @@ const map = L.map('map', {
   attributionControl: false
 });
 
-const boundLimit = 10000
+
 const bounds = [[-15000, -15000], [15000, 15000]];
-map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
+L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
+
+const boundLimit = 10000
+// map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
+
 map.setView([0, 0], Zoom);
+map.getRenderer(map).options.padding = 100;
 
 map.on('zoomanim', onZoomAnim);
 map.on('zoomend', onZoomEnd);
 
+
 var Layers = {}
 Layers.zoomedIslandLayer = new L.LayerGroup();
 Layers.islandLayer = new L.LayerGroup();
-Layers.labelLayer = new L.LayerGroup();
 Layers.markerLayer = new L.LayerGroup();
 
-
 Layers.islandLayer.addTo(map);
-Layers.labelLayer.addTo(map);
+
 
 L.control.mousePosition({ separator: ',', lngFirst: true, numDigits: -1 }).addTo(map);
 
@@ -43,10 +47,10 @@ var searchControl = new L.Control.Search({
   },
   buildTip: function (text, val) {
     var layer = val.layer;
-    return '<a href="#" class="search-tip">' +
-      '<b>' + layer.options.id + ' - ' + layer.options.name + '</b><br/>' +
-      'By: ' + layer.options.creator +
-      '</a>';
+    return  '<a href="#" class="search-tip">' +
+              '<b>' + layer.options.id + ' - ' + layer.options.name + '</b><br/>' +
+              'By: ' + layer.options.creator +
+            '</a>';
   },
   filterData: function (text, records) {
     var filteredResults = {};
@@ -73,16 +77,27 @@ searchControl.on('search:locationfound', function (e) {
 })
 
 searchControl.addTo(map);
-map.removeLayer(Layers.zoomedIslandLayer); // search add the layer for some reason?
+map.removeLayer(Layers.zoomedIslandLayer); // search add the layer back for some reason?
 
 
-map.getRenderer(map).options.padding = 100;
+var staticOverlay = L.control({
+  position: 'bottomright'
+});
 
+staticOverlay.onAdd = function(map) {
+  var div = L.DomUtil.create('div', 'static-overlay');
+  div.innerHTML = `
+    <a target="_blank" href="https://github.com/Davemane42/LostSkiesInteractiveMap">
+      <img width="48px" src="img/github-mark-white.svg">
+    </a>
+  `
+  L.DomEvent.disableClickPropagation(div);
+  L.DomEvent.disableScrollPropagation(div);
+  return div;
+};
 
-L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
+staticOverlay.addTo(map);
 
-// asyncFetch("data/IslandData.csv")
-//   .then(data => onIslandDataReceived(data))
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vR6tqFj6KVN9H0WC9uLtJGuXzWN6zCiGNZQNMeWDl9HixL0Lf_dzvowD6-E6cexYyUFm1vU-w6Sf-m3/pub?gid=0&single=true&output=csv')
   .then(csv => parseSheetCSV(csv))
 
@@ -116,11 +131,11 @@ function parseSheetCSV(csv) {
       Chest: values[17],
       Description: values[20]
     }
-    createIslandMarkers(islandData)
+    createIslandMarker(islandData)
   }
 }
 
-function createIslandMarkers(islandData) {
+function createIslandMarker(islandData) {
 
   var cos = Math.cos(Math.PI / 2)
   var sin = Math.sin(Math.PI / 2)
@@ -133,49 +148,45 @@ function createIslandMarkers(islandData) {
   var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 
 
-  var basicMarkerOptions = {
-    "fill": true,
-    "fillColor": color,
-    "fillOpacity": 1,
-    "stroke": true,
-    "color": darkenColor,
-    "opacity": 1,
-    "radius": 16
+  var zoomedOutMarkerOptions = {
+    icon : L.divIcon({
+      iconSize: [48, 48],
+      popupAnchor: [0, -24],
+      className: 'marker',
+      html: '<svg width="100%" height="100%">'+
+              '<circle cx="50%" cy="50%" r="16" stroke="'+darkenColor+'" stroke-width="3" fill="'+color+'" />'+
+            '</svg>'+
+            '<h1 style="z-index: 201;">'+ islandData.ID +'</h1>'
+    })
   }
-  var basicMarker = new L.circleMarker([islandData.X, islandData.Z], basicMarkerOptions).addTo(Layers.markerLayer);
-
-  // Island
-  var islandIcon = L.divIcon({
-    iconSize: [96, 96],
-    popupAnchor: [0, -48],
-    className: 'island-marker',
-    html: '<img src="' + 'img/islands/' + islandData.ID + '_square.webp' + '"/>'
-  })
-  var islandMarker = L.marker([islandData.X, islandData.Z], { icon: islandIcon }).addTo(Layers.islandLayer);
+  var zoomedOutMarker = L.marker([islandData.X, islandData.Z], zoomedOutMarkerOptions).addTo(Layers.markerLayer);
 
 
-  // ID Marker
-  var idMarkerOptions = {
-    "interactive": false,
-    icon: new L.divIcon({ html: islandData.ID, className: 'point-label' }),
-    pane: 'markerPane',
-    zIndexOffset: 1000
-  }
-  var idMarker = new L.Marker([islandData.X, islandData.Z], idMarkerOptions).addTo(Layers.labelLayer);
-
-  // Zoomed in island
-  var zoomedIslandOptions = {
+  var islandMarkerOptions = {
     icon: L.divIcon({
       iconSize: [96, 96],
-      className: 'island-marker',
-      html: '<h1>' + islandData.ID + ' - ' + islandData.Name + '</h1>' + '<img src="' + 'img/islands/' + islandData.ID + '_square.webp' + '"/>'
+      popupAnchor: [0, -48],
+      className: 'marker',
+      html: '<img src="img/islands/' + islandData.ID + '_square.webp"/>' +
+            '<h1>'+ islandData.ID +'</h1>'
+    })
+  }
+  var islandMarker = L.marker([islandData.X, islandData.Z], islandMarkerOptions).addTo(Layers.islandLayer);
 
+
+  var zoomedIslandMarkerOptions = {
+    icon: L.divIcon({
+      iconSize: [96, 96],
+      popupAnchor: [0, -48],
+      className: 'marker-zoomedIn',
+      html: '<h1>' + islandData.ID + ' - ' + islandData.Name + '</h1>' + 
+            '<img src="img/islands/' + islandData.ID + '_square.webp"/>'
     }),
     name: islandData.Name,
     id: islandData.ID,
     creator: islandData.Creator
   }
-  var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandOptions).addTo(Layers.zoomedIslandLayer);
+  var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 
   // Popup
   popup = '<b>#' + islandData.ID + ' - '
@@ -209,7 +220,7 @@ function createIslandMarkers(islandData) {
     minWidth: '320'
   }
 
-  basicMarker.bindPopup(popup, popupOptions);
+  zoomedOutMarker.bindPopup(popup, popupOptions);
   islandMarker.bindPopup(popup, popupOptions);
   zoomedIslandMarker.bindPopup(popup, popupOptions);
 }
@@ -241,10 +252,6 @@ function getDifficultyName(difficulty) {
   return 'VeryHard'
 }
 
-function onZoomStart(e) {
-  Zoom = e.zoom;
-}
-
 function onZoomAnim(e) {
   Zoom = e.zoom;
 }
@@ -261,12 +268,6 @@ function onZoomEnd(e) {
     map.addLayer(Layers.islandLayer);
   } else {
     map.removeLayer(Layers.islandLayer);
-  }
-
-  if (Zoom >= -5 && Zoom <= -4) {
-    map.addLayer(Layers.labelLayer);
-  } else {
-    map.removeLayer(Layers.labelLayer);
   }
 
   if (Zoom > -4) {
