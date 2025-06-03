@@ -111,7 +111,6 @@ function parseSheetCSV(csv) {
     if (values[0] == '' || isNaN(values[0])) {
       continue
     }
-
     var islandData = {
       ID: values[0],
       Name: values[1],
@@ -129,7 +128,7 @@ function parseSheetCSV(csv) {
       Items: values[14],
       Animals: values[15],
       Chest: values[17],
-      Description: values[20]
+      Description: values[19]
     }
     createIslandMarker(islandData)
   }
@@ -189,32 +188,27 @@ function createIslandMarker(islandData) {
   var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 
   // Popup
-  popup = '<b>#' + islandData.ID + ' - '
+  workshopLink = (islandData.Workshop != ''? '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>':islandData.Name)
+  difficulty = '<span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/>'
 
-  if (islandData.Workshop != '') {
-    popup += '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>'
-  } else {
-    popup += islandData.Name
-  }
-
-  popup += ' - <span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/></b><br>'
-
-
-  popup += '<b>By:</b> ' + islandData.Creator + '<br><br>' +
-    (islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '') +
-    '<b>Altitute:</b> ' + (1200 + Math.round(islandData.Y / 100) * 100) + 'm<br>' +
-    '<b>Has an Ark:</b> ' + (islandData.Ark == 'TRUE' ? "✅" : "❌") + '<br>' +
-    '<b>Databanks:</b> ' + (islandData.Databank !== '' ? islandData.Databank : 'Not Reported') + '<br>' +
-    '<b>Large Chest:</b> ' + (islandData.Chest !== '' ? islandData.Chest : 'Not Reported') + '<br><br>' +
-    '<b>The following items are not a complete list:</b><br>' +
-    '<b>Metals:</b> ' + (islandData.Metals !== '' ? islandData.Metals : 'Not Reported') + '<br>' +
-    '<b>Woods:</b> ' + (islandData.Woods !== '' ? islandData.Woods : 'Not Reported') + '<br>' +
-    '<b>Plants:</b> ' + (islandData.Plants !== '' ? islandData.Plants : 'Not Reported') + '<br>' +
-    '<b>Animals:</b> ' + (islandData.Animals !== '' ? islandData.Animals : 'Not Reported') + '<br>' +
-    '<b>Items:</b> ' + (islandData.Items !== '' ? islandData.Items : 'Not Reported') + '<br>' +
-    '<a href="img/islands/' + islandData.ID + '.webp" target="_blank"><img src="img/islands/' + islandData.ID + '_small.webp" width="320"></a><br>' +
-    '<a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a>' + ' or ' +
-    '<a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>'
+  popup = `
+    <b>#${islandData.ID} - ${workshopLink} - ${difficulty}</b><br>
+    <b>By:</b> ${islandData.Creator}<br><br>
+    ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
+    <b>Altitute:</b>${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
+    <b>Has an Ark:</b>${(islandData.Ark == 'TRUE' ? "✅" : "❌")}<br>
+    <b>Databanks:</b>${(islandData.Databank !== '' ? islandData.Databank : 'Not Reported')}<br>
+    <b>Large Chest:</b>${(islandData.Chest !== '' ? islandData.Chest : 'Not Reported')}<br><br>
+    <b>The following items are not a complete list:</b><br>
+    <b>Metals:</b>${(islandData.Metals !== '' ? islandData.Metals : 'Not Reported')}<br>
+    <b>Woods:</b>${(islandData.Woods !== '' ? islandData.Woods : 'Not Reported')}<br>
+    <b>Plants:</b>${(islandData.Plants !== '' ? islandData.Plants : 'Not Reported')}<br>
+    <b>Animals:</b>${(islandData.Animals !== '' ? islandData.Animals : 'Not Reported')}<br>
+    <b>Items:</b>${(islandData.Items !== '' ? islandData.Items : 'Not Reported')}<br>
+    <a href="img/islands/${islandData.ID}.webp" target="_blank"><img src="img/islands/${islandData.ID}_small.webp" width="320"></a><br>
+    <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
+    <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
+  `.replace(/[\r\n\t]/g, '')
 
   var popupOptions = {
     minWidth: '320'

@@ -75,7 +75,7 @@ def crop_center_square(img, target_size):
 
 if __name__ == "__main__":
     # Configuration
-    input_folder = "../img/rawIslandImages"  # Folder containing original images
+    input_folder = "./"  # Folder containing original images
     output_folder = "../img/islands"  # Folder to save processed images
     
     # Run the processing
