@@ -3,7 +3,7 @@ var Zoom = -4;
 
 const map = L.map('map', {
   crs: L.CRS.Simple,
-  minZoom: -5,
+  minZoom: -6,
   maxZoom: -3,
   zoomDelta: 0.5,
   zoomSnap: 0.5,
@@ -11,10 +11,10 @@ const map = L.map('map', {
 });
 
 
-const bounds = [[-15000, -15000], [15000, 15000]];
+const bounds = [[-25000, -25000], [25000, 25000]];
 L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
 
-const boundLimit = 10000
+const boundLimit = 15000
 // map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
 
 map.setView([0, 0], Zoom);
@@ -98,7 +98,7 @@ staticOverlay.onAdd = function(map) {
 
 staticOverlay.addTo(map);
 
-asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vR6tqFj6KVN9H0WC9uLtJGuXzWN6zCiGNZQNMeWDl9HixL0Lf_dzvowD6-E6cexYyUFm1vU-w6Sf-m3/pub?gid=0&single=true&output=csv')
+asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
   .then(csv => parseSheetCSV(csv))
 
 
@@ -114,21 +114,24 @@ function parseSheetCSV(csv) {
     var islandData = {
       ID: values[0],
       Name: values[1],
-      Creator: values[2],
-      Workshop: (values[3] == 'missing in workshop' ? '' : values[3]),
-      X: values[4],
-      Y: values[5],
-      Z: values[6],
-      Difficulty: values[8].replace(/[^0-9]/g, ''),
-      Databank: values[9],
-      Ark: values[10],
-      Metals: values[11],
-      Woods: values[12],
-      Plants: values[13],
-      Items: values[14],
-      Animals: values[15],
-      Chest: values[17],
-      Description: values[19]
+      X: values[2],
+      Y: values[3],
+      Z: values[4],
+      // Creator: values[2],
+      // Workshop: (values[3] == 'missing in workshop' ? '' : values[3]),
+      // X: values[4],
+      // Y: values[5],
+      // Z: values[6],
+      // Difficulty: values[8].replace(/[^0-9]/g, ''),
+      // Databank: values[9],
+      // Ark: values[10],
+      // Metals: values[11],
+      // Woods: values[12],
+      // Plants: values[13],
+      // Items: values[14],
+      // Animals: values[15],
+      // Chest: values[17],
+      // Description: values[19]
     }
     createIslandMarker(islandData)
   }
@@ -143,7 +146,11 @@ function createIslandMarker(islandData) {
   islandData.X = Math.round(x * 100) / 100
   islandData.Z = Math.round(-z * 100) / 100
 
-  var color = getDifficultyColor(islandData.Difficulty)
+  //var color = getDifficultyColor(islandData.Difficulty)
+  color = '#63c74d'
+  if (islandData.Name == "Herald_Spawn") {
+    color = '#e43b44'
+  }
   var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 
 
@@ -166,8 +173,12 @@ function createIslandMarker(islandData) {
       iconSize: [96, 96],
       popupAnchor: [0, -48],
       className: 'marker',
-      html: '<img src="img/islands/' + islandData.ID + '_square.webp"/>' +
-            '<h1>'+ islandData.ID +'</h1>'
+      // html: '<img src="img/islands/' + islandData.ID + '_square.webp"/>' +
+      //       '<h1>'+ islandData.ID +'</h1>'
+      html: '<svg width="100%" height="100%">'+
+              '<circle cx="50%" cy="50%" r="16" stroke="'+darkenColor+'" stroke-width="3" fill="'+color+'" />'+
+            '</svg>'+
+            '<h1 style="z-index: 201;">'+ islandData.ID +'</h1>'
     })
   }
   var islandMarker = L.marker([islandData.X, islandData.Z], islandMarkerOptions).addTo(Layers.islandLayer);
@@ -179,35 +190,39 @@ function createIslandMarker(islandData) {
       popupAnchor: [0, -48],
       className: 'marker-zoomedIn',
       html: '<h1>' + islandData.ID + ' - ' + islandData.Name + '</h1>' + 
-            '<img src="img/islands/' + islandData.ID + '_square.webp"/>'
+            '<img src="img/favicon.png"/>'
+            //'<img src="img/islands/' + islandData.ID + '_square.webp"/>'
     }),
     name: islandData.Name,
     id: islandData.ID,
-    creator: islandData.Creator
+    //creator: islandData.Creator
   }
   var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 
   // Popup
-  workshopLink = (islandData.Workshop != ''? '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>':islandData.Name)
-  difficulty = '<span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/>'
+  // workshopLink = (islandData.Workshop != ''? '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>':islandData.Name)
+  // difficulty = '<span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/>'
 
+  // popup = `
+  //   <b>#${islandData.ID} - ${workshopLink} - ${difficulty}</b><br>
+  //   <b>By:</b> ${islandData.Creator}<br><br>
+  //   ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
+  //   <b>Altitute:</b>${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
+  //   <b>Has an Ark:</b>${(islandData.Ark == 'TRUE' ? "✅" : "❌")}<br>
+  //   <b>Databanks:</b>${(islandData.Databank !== '' ? islandData.Databank : 'Not Reported')}<br>
+  //   <b>Large Chest:</b>${(islandData.Chest !== '' ? islandData.Chest : 'Not Reported')}<br><br>
+  //   <b>The following items are not a complete list:</b><br>
+  //   <b>Metals:</b>${(islandData.Metals !== '' ? islandData.Metals : 'Not Reported')}<br>
+  //   <b>Woods:</b>${(islandData.Woods !== '' ? islandData.Woods : 'Not Reported')}<br>
+  //   <b>Plants:</b>${(islandData.Plants !== '' ? islandData.Plants : 'Not Reported')}<br>
+  //   <b>Animals:</b>${(islandData.Animals !== '' ? islandData.Animals : 'Not Reported')}<br>
+  //   <b>Items:</b>${(islandData.Items !== '' ? islandData.Items : 'Not Reported')}<br>
+  //   <a href="img/islands/${islandData.ID}.webp" target="_blank"><img src="img/islands/${islandData.ID}_small.webp" width="320"></a><br>
+  //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
+  //   <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
+  // `.replace(/[\r\n\t]/g, '')
   popup = `
-    <b>#${islandData.ID} - ${workshopLink} - ${difficulty}</b><br>
-    <b>By:</b> ${islandData.Creator}<br><br>
-    ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
-    <b>Altitute:</b>${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
-    <b>Has an Ark:</b>${(islandData.Ark == 'TRUE' ? "✅" : "❌")}<br>
-    <b>Databanks:</b>${(islandData.Databank !== '' ? islandData.Databank : 'Not Reported')}<br>
-    <b>Large Chest:</b>${(islandData.Chest !== '' ? islandData.Chest : 'Not Reported')}<br><br>
-    <b>The following items are not a complete list:</b><br>
-    <b>Metals:</b>${(islandData.Metals !== '' ? islandData.Metals : 'Not Reported')}<br>
-    <b>Woods:</b>${(islandData.Woods !== '' ? islandData.Woods : 'Not Reported')}<br>
-    <b>Plants:</b>${(islandData.Plants !== '' ? islandData.Plants : 'Not Reported')}<br>
-    <b>Animals:</b>${(islandData.Animals !== '' ? islandData.Animals : 'Not Reported')}<br>
-    <b>Items:</b>${(islandData.Items !== '' ? islandData.Items : 'Not Reported')}<br>
-    <a href="img/islands/${islandData.ID}.webp" target="_blank"><img src="img/islands/${islandData.ID}_small.webp" width="320"></a><br>
-    <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
-    <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
+    <b>#${islandData.ID} - ${islandData.Name}</b><br>
   `.replace(/[\r\n\t]/g, '')
 
   var popupOptions = {
@@ -252,13 +267,13 @@ function onZoomAnim(e) {
 
 function onZoomEnd(e) {
 
-  if (Zoom == -5) {
+  if (Zoom == -6) {
     map.addLayer(Layers.markerLayer);
   } else {
     map.removeLayer(Layers.markerLayer)
   }
 
-  if (Zoom > -5 && Zoom <= -4) {
+  if (Zoom > -6 && Zoom <= -4) {
     map.addLayer(Layers.islandLayer);
   } else {
     map.removeLayer(Layers.islandLayer);
