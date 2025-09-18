@@ -60,7 +60,7 @@ var searchControl = new L.Control.Search({
       var props = records[key].layer.options
       if (
         props.name.toLowerCase().includes(searchText) ||
-        props.creator.toLowerCase().includes(searchText) ||
+        //props.creator.toLowerCase().includes(searchText) ||
         props.id.toLowerCase().includes(searchText)
       ) {
         filteredResults[key] = records[key]
@@ -98,6 +98,20 @@ staticOverlay.onAdd = function(map) {
 
 staticOverlay.addTo(map);
 
+var bannerOverlay = L.control({
+  position: 'topright'
+});
+
+bannerOverlay.onAdd = function(map) {
+  var div = L.DomUtil.create('div', 'static-overlay');
+  div.innerHTML = `<h3 style="color: white; background-color: black; text-align: center; margin: auto;">1.0 WIP</br>contact "Davemane42"</br>on Discord to help</h3>`
+  L.DomEvent.disableClickPropagation(div);
+  L.DomEvent.disableScrollPropagation(div);
+  return div;
+};
+
+bannerOverlay.addTo(map);
+
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
   .then(csv => parseSheetCSV(csv))
 
@@ -111,27 +125,20 @@ function parseSheetCSV(csv) {
     if (values[0] == '' || isNaN(values[0])) {
       continue
     }
+    // id, Name, PosX, PosY, PosZ, Region, Creator, Workshop, HasArk, Databanks, Large Chests, Description
     var islandData = {
       ID: values[0],
       Name: values[1],
       X: values[2],
       Y: values[3],
       Z: values[4],
-      // Creator: values[2],
-      // Workshop: (values[3] == 'missing in workshop' ? '' : values[3]),
-      // X: values[4],
-      // Y: values[5],
-      // Z: values[6],
-      // Difficulty: values[8].replace(/[^0-9]/g, ''),
-      // Databank: values[9],
-      // Ark: values[10],
-      // Metals: values[11],
-      // Woods: values[12],
-      // Plants: values[13],
-      // Items: values[14],
-      // Animals: values[15],
-      // Chest: values[17],
-      // Description: values[19]
+      Region: values[5],
+      Creator: values[6],
+      Workshop: values[7],
+      HasArk: values[8],
+      Databanks: values[9],
+      Chests: values[10],
+      Description: values[11]
     }
     createIslandMarker(islandData)
   }
@@ -139,6 +146,7 @@ function parseSheetCSV(csv) {
 
 function createIslandMarker(islandData) {
 
+  // rotate X and Z coord 
   var cos = Math.cos(Math.PI / 2)
   var sin = Math.sin(Math.PI / 2)
   var x = (cos * islandData.X) + (sin * islandData.Z)
@@ -148,9 +156,6 @@ function createIslandMarker(islandData) {
 
   //var color = getDifficultyColor(islandData.Difficulty)
   color = '#63c74d'
-  if (islandData.Name == "Herald_Spawn") {
-    color = '#e43b44'
-  }
   var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 
 
@@ -199,31 +204,22 @@ function createIslandMarker(islandData) {
   }
   var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 
-  // Popup
-  // workshopLink = (islandData.Workshop != ''? '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>':islandData.Name)
   // difficulty = '<span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/>'
+  workshopLink = (islandData.Workshop != ''? '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>':islandData.Name)
+  creator = (islandData.Creator == '' ? 'missing Creator': islandData.Creator)
 
-  // popup = `
-  //   <b>#${islandData.ID} - ${workshopLink} - ${difficulty}</b><br>
-  //   <b>By:</b> ${islandData.Creator}<br><br>
-  //   ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
-  //   <b>Altitute:</b>${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
-  //   <b>Has an Ark:</b>${(islandData.Ark == 'TRUE' ? "✅" : "❌")}<br>
-  //   <b>Databanks:</b>${(islandData.Databank !== '' ? islandData.Databank : 'Not Reported')}<br>
-  //   <b>Large Chest:</b>${(islandData.Chest !== '' ? islandData.Chest : 'Not Reported')}<br><br>
-  //   <b>The following items are not a complete list:</b><br>
-  //   <b>Metals:</b>${(islandData.Metals !== '' ? islandData.Metals : 'Not Reported')}<br>
-  //   <b>Woods:</b>${(islandData.Woods !== '' ? islandData.Woods : 'Not Reported')}<br>
-  //   <b>Plants:</b>${(islandData.Plants !== '' ? islandData.Plants : 'Not Reported')}<br>
-  //   <b>Animals:</b>${(islandData.Animals !== '' ? islandData.Animals : 'Not Reported')}<br>
-  //   <b>Items:</b>${(islandData.Items !== '' ? islandData.Items : 'Not Reported')}<br>
+  popup = `
+    <b>#${islandData.ID} - ${workshopLink} - ${islandData.Region}</b><br>
+    <b>By:</b> ${creator}<br><br>
+    ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
+    <b>Altitute:</b> ${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
+    <b>Has an Ark:</b> ${(islandData.HasArk == 'TRUE' ? "✅" : "❌")}<br>
+    <b>Databanks:</b> ${(islandData.Databanks == '' ? 'Not Reported': islandData.Databanks)}<br>
+    <b>Large Chests:</b> ${(islandData.Chests == '' ? 'Not Reported': islandData.Chests)}<br><br>
+  `.replace(/[\r\n\t]/g, '')
   //   <a href="img/islands/${islandData.ID}.webp" target="_blank"><img src="img/islands/${islandData.ID}_small.webp" width="320"></a><br>
   //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
   //   <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
-  // `.replace(/[\r\n\t]/g, '')
-  popup = `
-    <b>#${islandData.ID} - ${islandData.Name}</b><br>
-  `.replace(/[\r\n\t]/g, '')
 
   var popupOptions = {
     minWidth: '320'
