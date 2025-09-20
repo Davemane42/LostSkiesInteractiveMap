@@ -125,7 +125,7 @@ function parseSheetCSV(csv) {
     if (values[0] == '' || isNaN(values[0])) {
       continue
     }
-    // id, Name, PosX, PosY, PosZ, Region, Creator, Workshop, HasArk, Databanks, Large Chests, Description
+    // id, Name, PosX, PosY, PosZ, Region, Creator, Workshop, HasArk, Databanks, Large Chests, Description, HasImage
     var islandData = {
       ID: values[0],
       Name: values[1],
@@ -138,7 +138,8 @@ function parseSheetCSV(csv) {
       HasArk: values[8],
       Databanks: values[9],
       Chests: values[10],
-      Description: values[11]
+      Description: values[11],
+      HasImage: values[12]
     }
     createIslandMarker(islandData)
   }
@@ -158,6 +159,8 @@ function createIslandMarker(islandData) {
   color = '#63c74d'
   var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 
+  islandDisplayName = islandData.Name.replaceAll('_', ' ')
+
 
   var zoomedOutMarkerOptions = {
     icon : L.divIcon({
@@ -165,47 +168,42 @@ function createIslandMarker(islandData) {
       popupAnchor: [0, -24],
       className: 'marker',
       html: '<svg width="100%" height="100%">'+
-              '<circle cx="50%" cy="50%" r="16" stroke="'+darkenColor+'" stroke-width="3" fill="'+color+'" />'+
+            '<circle cx="50%" cy="50%" r="16" stroke="'+darkenColor+'" stroke-width="3" fill="'+color+'" />'+
             '</svg>'+
             '<h1 style="z-index: 201;">'+ islandData.ID +'</h1>'
     })
   }
   var zoomedOutMarker = L.marker([islandData.X, islandData.Z], zoomedOutMarkerOptions).addTo(Layers.markerLayer);
 
+  squareImageSrc = (islandData.HasImage == "TRUE" ? "img/islands/" + islandData.Name + "_square.webp" : 'img/bigFavicon.png')
 
   var islandMarkerOptions = {
     icon: L.divIcon({
       iconSize: [96, 96],
       popupAnchor: [0, -48],
       className: 'marker',
-      // html: '<img src="img/islands/' + islandData.ID + '_square.webp"/>' +
-      //       '<h1>'+ islandData.ID +'</h1>'
-      html: '<svg width="100%" height="100%">'+
-              '<circle cx="50%" cy="50%" r="16" stroke="'+darkenColor+'" stroke-width="3" fill="'+color+'" />'+
-            '</svg>'+
-            '<h1 style="z-index: 201;">'+ islandData.ID +'</h1>'
+      html: '<img src="' + squareImageSrc + '"/>' +
+            '<h1>'+ islandData.ID +'</h1>'
     })
   }
   var islandMarker = L.marker([islandData.X, islandData.Z], islandMarkerOptions).addTo(Layers.islandLayer);
-
 
   var zoomedIslandMarkerOptions = {
     icon: L.divIcon({
       iconSize: [96, 96],
       popupAnchor: [0, -48],
       className: 'marker-zoomedIn',
-      html: '<h1>' + islandData.ID + ' - ' + islandData.Name + '</h1>' + 
-            '<img src="img/favicon.png"/>'
-            //'<img src="img/islands/' + islandData.ID + '_square.webp"/>'
+      html: '<h1>' + islandData.ID + ' - ' + islandDisplayName + '</h1>' + 
+            '<img src="' + squareImageSrc + '"/>'
     }),
-    name: islandData.Name,
+    name: islandDisplayName,
     id: islandData.ID,
     //creator: islandData.Creator
   }
   var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 
   // difficulty = '<span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/>'
-  workshopLink = (islandData.Workshop != ''? '<a href="' + islandData.Workshop + '" target="_blank">' + islandData.Name + '</a>':islandData.Name)
+  workshopLink = (islandData.Workshop == '' ? islandDisplayName : '<a href="' + islandData.Workshop + '" target="_blank">' + islandDisplayName + '</a>')
   creator = (islandData.Creator == '' ? 'missing Creator': islandData.Creator)
 
   popup = `
@@ -216,6 +214,8 @@ function createIslandMarker(islandData) {
     <b>Has an Ark:</b> ${(islandData.HasArk == 'TRUE' ? "✅" : "❌")}<br>
     <b>Databanks:</b> ${(islandData.Databanks == '' ? 'Not Reported': islandData.Databanks)}<br>
     <b>Large Chests:</b> ${(islandData.Chests == '' ? 'Not Reported': islandData.Chests)}<br><br>
+    ${(islandData.HasImage == "TRUE" ? '<a href="img/islands/'+islandData.Name+'.webp" target="_blank"><img src="img/islands/'+islandData.Name+'_small.webp" width="320"></a><br>' : '')}
+
   `.replace(/[\r\n\t]/g, '')
   //   <a href="img/islands/${islandData.ID}.webp" target="_blank"><img src="img/islands/${islandData.ID}_small.webp" width="320"></a><br>
   //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
@@ -263,13 +263,13 @@ function onZoomAnim(e) {
 
 function onZoomEnd(e) {
 
-  if (Zoom == -6) {
+  if (Zoom >= -6 && Zoom < -4.5) {
     map.addLayer(Layers.markerLayer);
   } else {
     map.removeLayer(Layers.markerLayer)
   }
 
-  if (Zoom > -6 && Zoom <= -4) {
+  if (Zoom >= -4.5 && Zoom <= -4) {
     map.addLayer(Layers.islandLayer);
   } else {
     map.removeLayer(Layers.islandLayer);
