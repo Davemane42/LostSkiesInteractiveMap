@@ -3,7 +3,7 @@ var Zoom = -4;
 
 const map = L.map('map', {
   crs: L.CRS.Simple,
-  minZoom: -6,
+  minZoom: -7,
   maxZoom: -3,
   zoomDelta: 0.5,
   zoomSnap: 0.5,
@@ -11,11 +11,14 @@ const map = L.map('map', {
 });
 
 
-const bounds = [[-25000, -25000], [25000, 25000]];
-L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
-
-const boundLimit = 15000
+//const bounds = [[-25000, -25000], [25000, 25000]];
+//L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
+//const boundLimit = 15000
 // map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
+L.circle([0, 0], {radius: 26000, color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
+
+
+
 
 map.setView([0, 0], Zoom);
 map.getRenderer(map).options.padding = 100;
@@ -28,8 +31,10 @@ var Layers = {}
 Layers.zoomedIslandLayer = new L.LayerGroup();
 Layers.islandLayer = new L.LayerGroup();
 Layers.markerLayer = new L.LayerGroup();
+Layers.wallLayer = new L.LayerGroup();
 
 Layers.islandLayer.addTo(map);
+Layers.wallLayer.addTo(map);
 
 
 L.control.mousePosition({ separator: ',', lngFirst: true, numDigits: -1 }).addTo(map);
@@ -115,6 +120,8 @@ bannerOverlay.addTo(map);
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
   .then(csv => parseSheetCSV(csv))
 
+asyncFetch('wallData.json')
+  .then(json => parseWallJson(json))
 
 function parseSheetCSV(csv) {
   var rows = csv.replace(/\r/g, '').split('\n');
@@ -145,18 +152,43 @@ function parseSheetCSV(csv) {
   }
 }
 
+function parseWallJson(json) {
+  var obj = JSON.parse(json)
+
+  for (const regionType in obj) {
+    const region = obj[regionType];
+
+    // var regionType = regionType
+    // var regionThickness = region.Thickness
+
+    region.Segments.forEach(segment => {
+      var [x1, z1] = rotateXZ(parseFloat(segment[0]), parseFloat(segment[1]))
+      var [x2, z2] = rotateXZ(parseFloat(segment[2]), parseFloat(segment[3]))
+
+      var polylineOptions = {
+        color : getRegionColor(regionType),
+        fill : false,
+        interactive : false,
+        opacity: 1,
+        stroke : true,
+        weight : 10
+      }
+
+      var polyline = L.polyline([[x1, z1], [x2, z2]], polylineOptions).addTo(Layers.wallLayer);
+    });
+  }
+}
+
+
 function createIslandMarker(islandData) {
 
-  // rotate X and Z coord 
-  var cos = Math.cos(Math.PI / 2)
-  var sin = Math.sin(Math.PI / 2)
-  var x = (cos * islandData.X) + (sin * islandData.Z)
-  var z = (cos * islandData.Z) - (sin * islandData.X)
-  islandData.X = Math.round(x * 100) / 100
-  islandData.Z = Math.round(-z * 100) / 100
+  var [tx, tz] = rotateXZ(islandData.X, islandData.Z)
+  islandData.X = Math.round(tx * 100) / 100
+  islandData.Z = Math.round(tz * 100) / 100
 
   //var color = getDifficultyColor(islandData.Difficulty)
-  color = '#63c74d'
+  color = getRegionColor(islandData.Region)
+  if (color == '#ff0044') color = '#63c74d'
   var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 
   islandDisplayName = islandData.Name.replaceAll('_', ' ')
@@ -230,6 +262,15 @@ function createIslandMarker(islandData) {
   zoomedIslandMarker.bindPopup(popup, popupOptions);
 }
 
+const rotateCos = Math.cos(Math.PI / 2)
+const rotateSin = Math.sin(Math.PI / 2)
+
+function rotateXZ(x, z) {
+  var newX = (rotateCos * x) + (rotateSin * z)
+  var newZ = (rotateCos * z) - (rotateSin * x)
+  return [newX, -newZ]
+}
+
 async function asyncFetch(url) {
   try {
     const response = await fetch(url);
@@ -248,6 +289,14 @@ function getDifficultyColor(difficulty) {
   if (difficulty < 11) { return '#feae34' } // Medium
   if (difficulty < 14) { return '#f77622' } // Hard
   return '#e43b44'                          // Very-Hard
+}
+
+function getRegionColor(regionType) {
+  var color = "#ff0044"
+  if (regionType == "WindRegion1") color = "#c0cbdc"
+  if (regionType == "WindRegion2") color = "#8b9bb4"
+  if (regionType == "StormRegion4") color = "#124e89"
+  return color
 }
 
 function getDifficultyName(difficulty) {
@@ -280,4 +329,10 @@ function onZoomEnd(e) {
   } else {
     map.removeLayer(Layers.zoomedIslandLayer);
   }
+
+  var newWeight = 14+Zoom
+  Layers.wallLayer.eachLayer(function(wall) {
+      wall.setStyle({weight: newWeight});
+    }
+  );
 }
