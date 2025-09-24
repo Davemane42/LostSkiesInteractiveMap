@@ -2,7 +2,6 @@
 var Zoom = -4;
 
 const isVisitedStorageKey = "isVisited_"
-var CurrentPopup = null
 var Islands = {}
 
 const map = L.map('map', {
@@ -315,12 +314,9 @@ function handleVisitedCheckbox(islandName, isVisited) {
     localStorage.removeItem(isVisitedStorageKey+islandName)
   }
 
-  Islands[islandName].Markers.forEach(marker => {
-    marker.unbindPopup()
-  });
-  Islands[islandName].Markers.forEach(marker => {
-    marker.remove()
-  });
+  Islands[islandName].Markers[0].unbindPopup().removeFrom(Layers.markerLayer)
+  Islands[islandName].Markers[1].unbindPopup().removeFrom(Layers.islandLayer)
+  Islands[islandName].Markers[2].unbindPopup().removeFrom(Layers.zoomedIslandLayer)
 
   Islands[islandName].isVisited = isVisited
 
@@ -379,19 +375,19 @@ function onZoomEnd(e) {
   if (Zoom >= -6 && Zoom < -4.5) {
     map.addLayer(Layers.markerLayer);
   } else {
-    map.removeLayer(Layers.markerLayer)
+    map.removeLayer(Layers.markerLayer).closePopup();
   }
 
   if (Zoom >= -4.5 && Zoom <= -4) {
     map.addLayer(Layers.islandLayer);
   } else {
-    map.removeLayer(Layers.islandLayer);
+    map.removeLayer(Layers.islandLayer).closePopup();
   }
 
   if (Zoom > -4) {
     map.addLayer(Layers.zoomedIslandLayer);
   } else {
-    map.removeLayer(Layers.zoomedIslandLayer);
+    map.removeLayer(Layers.zoomedIslandLayer).closePopup();
   }
 
   var newWeight = 14+Zoom
