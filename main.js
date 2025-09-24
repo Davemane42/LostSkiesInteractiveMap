@@ -1,6 +1,10 @@
 
 var Zoom = -4;
 
+const isVisitedStorageKey = "isVisited_"
+var CurrentPopup = null
+var Islands = {}
+
 const map = L.map('map', {
   crs: L.CRS.Simple,
   minZoom: -7,
@@ -16,9 +20,6 @@ const map = L.map('map', {
 //const boundLimit = 15000
 // map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
 L.circle([0, 0], {radius: 26000, color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
-
-
-
 
 map.setView([0, 0], Zoom);
 map.getRenderer(map).options.padding = 100;
@@ -132,7 +133,7 @@ function parseSheetCSV(csv) {
     if (values[0] == '' || isNaN(values[0])) {
       continue
     }
-    // id, Name, PosX, PosY, PosZ, Region, Creator, Workshop, HasArk, Databanks, Large Chests, Description, HasImage
+    // id, Name, PosX, PosY, PosZ, Region, Creator, Workshop, HasArk, Databanks, Large Chests, Description, HasImage, Biome
     var islandData = {
       ID: values[0],
       Name: values[1],
@@ -146,9 +147,20 @@ function parseSheetCSV(csv) {
       Databanks: values[9],
       Chests: values[10],
       Description: values[11],
-      HasImage: values[12]
+      HasImage: values[12],
+      Biome: values[13]
     }
-    createIslandMarker(islandData)
+    var [rotatedX, rotatedZ] = rotateXZ(islandData.X, islandData.Z)
+    islandData.X = Math.round(rotatedX * 100) / 100
+    islandData.Z = Math.round(rotatedZ * 100) / 100
+
+    if (islandData.Name == "Herald_Spawn") {
+      continue
+      createHeraldSpawnMarker(islandData)
+    } else {
+      createIslandMarker(islandData)
+    }
+    
   }
 }
 
@@ -179,20 +191,41 @@ function parseWallJson(json) {
   }
 }
 
+function createHeraldSpawnMarker(islandData) {
+
+  var color = "#e43b44"
+
+  var heraldSpawnMarkerOptions = {
+    icon : L.divIcon({
+      iconSize: [48, 48],
+      popupAnchor: [0, -24],
+      className: 'marker',
+      html: '<svg width="100%" height="100%">'+
+            '<circle cx="50%" cy="50%" r="16" stroke="'+darkenHexColor(color)+'" stroke-width="3" fill="'+color+'" />'+
+            '</svg>'
+    })
+  }
+  var heraldSpawnMarker = L.marker([islandData.X, islandData.Z], heraldSpawnMarkerOptions).addTo(Layers.zoomedIslandLayer);
+  heraldSpawnMarker = L.marker([islandData.X, islandData.Z], heraldSpawnMarkerOptions).addTo(Layers.islandLayer);
+}
 
 function createIslandMarker(islandData) {
 
-  var [tx, tz] = rotateXZ(islandData.X, islandData.Z)
-  islandData.X = Math.round(tx * 100) / 100
-  islandData.Z = Math.round(tz * 100) / 100
+  var regionColor = (islandData.Region != '' ? getRegionColor(islandData.Region) : '#ffffff')
+  var biomeColor = (islandData.Biome != '' ? getBiomeColor(islandData.Biome) : '#ffffff')
 
-  //var color = getDifficultyColor(islandData.Difficulty)
-  color = getRegionColor(islandData.Region)
-  if (color == '#ff0044') color = '#63c74d'
-  var darkenColor = '#' + color.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
+  var fillColor = biomeColor
+  var borderColor = darkenHexColor(regionColor)
 
-  islandDisplayName = islandData.Name.replaceAll('_', ' ')
+  var islandDisplayName = islandData.Name.replaceAll('_', ' ')
+  var isVisited = localStorage.getItem(isVisitedStorageKey+islandData.Name) === 'true'
+  if (islandData.hasOwnProperty("isVisited")) {
+    isVisited = islandData.isVisited
+  }
 
+  if (isVisited) {
+    borderColor = '#ff0044'
+  }
 
   var zoomedOutMarkerOptions = {
     icon : L.divIcon({
@@ -200,7 +233,7 @@ function createIslandMarker(islandData) {
       popupAnchor: [0, -24],
       className: 'marker',
       html: '<svg width="100%" height="100%">'+
-            '<circle cx="50%" cy="50%" r="16" stroke="'+darkenColor+'" stroke-width="3" fill="'+color+'" />'+
+            '<circle cx="50%" cy="50%" r="16" stroke="'+borderColor+'" stroke-width="3" fill="'+fillColor+'" />'+
             '</svg>'+
             '<h1 style="z-index: 201;">'+ islandData.ID +'</h1>'
     })
@@ -208,13 +241,14 @@ function createIslandMarker(islandData) {
   var zoomedOutMarker = L.marker([islandData.X, islandData.Z], zoomedOutMarkerOptions).addTo(Layers.markerLayer);
 
   squareImageSrc = (islandData.HasImage == "TRUE" ? "img/islands/" + islandData.Name + "_square.webp" : 'img/bigFavicon.png')
+  imgStyle = (isVisited ? 'style="border:4px solid '+ borderColor +'; border-radius:50%;"' : '')
 
   var islandMarkerOptions = {
     icon: L.divIcon({
       iconSize: [96, 96],
       popupAnchor: [0, -48],
       className: 'marker',
-      html: '<img src="' + squareImageSrc + '"/>' +
+      html: '<img '+ imgStyle +' src="'+ squareImageSrc +'"/>' +
             '<h1>'+ islandData.ID +'</h1>'
     })
   }
@@ -225,8 +259,8 @@ function createIslandMarker(islandData) {
       iconSize: [96, 96],
       popupAnchor: [0, -48],
       className: 'marker-zoomedIn',
-      html: '<h1>' + islandData.ID + ' - ' + islandDisplayName + '</h1>' + 
-            '<img src="' + squareImageSrc + '"/>'
+      html: '<img '+ imgStyle +' src="' + squareImageSrc + '"/>' +
+            '<h1>' + islandData.ID + ' - ' + islandDisplayName + '</h1>'
     }),
     name: islandDisplayName,
     id: islandData.ID,
@@ -234,12 +268,12 @@ function createIslandMarker(islandData) {
   }
   var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 
-  // difficulty = '<span style="color:' + color + '">' + islandData.Difficulty + ' ' + getDifficultyName(islandData.Difficulty) + '<span/>'
   workshopLink = (islandData.Workshop == '' ? islandDisplayName : '<a href="' + islandData.Workshop + '" target="_blank">' + islandDisplayName + '</a>')
   creator = (islandData.Creator == '' ? 'missing Creator': islandData.Creator)
+  biome = (islandData.Biome == '' ? 'Not Reported': '<span style="color:'+ getBiomeColor(islandData.Biome) +'">'+ islandData.Biome +'<span/>')
 
-  popup = `
-    <b>#${islandData.ID} - ${workshopLink} - ${islandData.Region}</b><br>
+  popupHtml = `
+    <b>#${islandData.ID} - ${workshopLink} - ${biome}</b><br>
     <b>By:</b> ${creator}<br><br>
     ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
     <b>Altitute:</b> ${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
@@ -247,9 +281,8 @@ function createIslandMarker(islandData) {
     <b>Databanks:</b> ${(islandData.Databanks == '' ? 'Not Reported': islandData.Databanks)}<br>
     <b>Large Chests:</b> ${(islandData.Chests == '' ? 'Not Reported': islandData.Chests)}<br><br>
     ${(islandData.HasImage == "TRUE" ? '<a href="img/islands/'+islandData.Name+'.webp" target="_blank"><img src="img/islands/'+islandData.Name+'_small.webp" width="320"></a><br>' : '')}
-
+    <b>Visited: </b> <input type="checkbox" id=${isVisitedStorageKey+islandData.Name} ${isVisited ? "checked" : ""} onchange="handleVisitedCheckbox('${islandData.Name}', this.checked)">
   `.replace(/[\r\n\t]/g, '')
-  //   <a href="img/islands/${islandData.ID}.webp" target="_blank"><img src="img/islands/${islandData.ID}_small.webp" width="320"></a><br>
   //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
   //   <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
 
@@ -257,14 +290,46 @@ function createIslandMarker(islandData) {
     minWidth: '320'
   }
 
-  zoomedOutMarker.bindPopup(popup, popupOptions);
-  islandMarker.bindPopup(popup, popupOptions);
-  zoomedIslandMarker.bindPopup(popup, popupOptions);
+  zoomedOutMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
+  islandMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
+  zoomedIslandMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
+
+  Islands[islandData.Name] = islandData
+  Islands[islandData.Name].Markers = [
+    zoomedOutMarker,
+    islandMarker,
+    zoomedIslandMarker
+  ]
+}
+
+function handleIslandPopupOpen(islandName) {
+  var checkbox = document.getElementById(isVisitedStorageKey+islandName)
+  var isVisited = localStorage.getItem(isVisitedStorageKey+islandName) === 'true'
+  checkbox.checked = isVisited
+}
+
+function handleVisitedCheckbox(islandName, isVisited) {
+  if (isVisited) {
+    localStorage.setItem(isVisitedStorageKey+islandName, 'true')
+  } else {
+    localStorage.removeItem(isVisitedStorageKey+islandName)
+  }
+
+  Islands[islandName].Markers.forEach(marker => {
+    marker.unbindPopup()
+  });
+  Islands[islandName].Markers.forEach(marker => {
+    marker.remove()
+  });
+
+  Islands[islandName].isVisited = isVisited
+
+  
+  createIslandMarker(Islands[islandName])
 }
 
 const rotateCos = Math.cos(Math.PI / 2)
 const rotateSin = Math.sin(Math.PI / 2)
-
 function rotateXZ(x, z) {
   var newX = (rotateCos * x) + (rotateSin * z)
   var newZ = (rotateCos * z) - (rotateSin * x)
@@ -284,26 +349,25 @@ async function asyncFetch(url) {
   }
 }
 
-function getDifficultyColor(difficulty) {
-  if (difficulty < 8) { return '#63c74d' }  // Easy
-  if (difficulty < 11) { return '#feae34' } // Medium
-  if (difficulty < 14) { return '#f77622' } // Hard
-  return '#e43b44'                          // Very-Hard
-}
-
-function getRegionColor(regionType) {
-  var color = "#ff0044"
-  if (regionType == "WindRegion1") color = "#c0cbdc"
-  if (regionType == "WindRegion2") color = "#8b9bb4"
-  if (regionType == "StormRegion4") color = "#124e89"
+function getRegionColor(region) {
+  var color = "#f6757a"
+  if (region == "WindRegion1") color = "#c0cbdc"
+  if (region == "WindRegion2") color = "#8b9bb4"
+  if (region == "StormRegion4") color = "#124e89"
   return color
 }
 
-function getDifficultyName(difficulty) {
-  if (difficulty < 8) { return 'Easy' }
-  if (difficulty < 11) { return 'Medium' }
-  if (difficulty < 14) { return 'Hard' }
-  return 'VeryHard'
+function getBiomeColor(biome) {
+  var color = "#f6757a"
+  if (biome == "Green Pines") color = "#63c74d"
+  if (biome == "Azure Grove") color = "#0099db"
+  if (biome == "Atlas Heights") color = "#124e89"
+  if (biome == "Midlands") color = "#f77622"
+  return color
+}
+
+function darkenHexColor(hexString) {
+  return '#' + hexString.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 }
 
 function onZoomAnim(e) {

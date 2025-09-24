@@ -11,11 +11,19 @@ body,
     background: #181425;
 }
 
-.marker {
+.marker,
+.marker-zoomedIn {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 }
+
+.marker img,
+.marker-zoomedIn img {
+    position: absolute;
+    clip-path: circle();
+}
+
 .marker h1 {
     position: absolute;
 
@@ -25,28 +33,17 @@ body,
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #000;
 }
-.marker img {
-    position: absolute;
-    clip-path: circle();
-}
 
-.marker-zoomedIn {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    justify-content: flex-end;
-}
 .marker-zoomedIn h1 {
-    margin: 0;
+    position: absolute;
+    top: -40%;
 
     text-wrap: nowrap;
     font-weight: bold;
     font-size: medium;
     color: #fff;
 }
-.marker-zoomedIn img {
-    clip-path: circle();
-}
+
 
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
