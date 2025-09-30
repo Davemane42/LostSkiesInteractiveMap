@@ -13,12 +13,10 @@ const map = L.map('map', {
   attributionControl: false
 });
 
-
 //const bounds = [[-25000, -25000], [25000, 25000]];
 //L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
 //const boundLimit = 15000
 // map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
-L.circle([0, 0], {radius: 26000, color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
 
 map.setView([0, 0], Zoom);
 map.getRenderer(map).options.padding = 100;
@@ -32,9 +30,14 @@ Layers.zoomedIslandLayer = new L.LayerGroup();
 Layers.islandLayer = new L.LayerGroup();
 Layers.markerLayer = new L.LayerGroup();
 Layers.wallLayer = new L.LayerGroup();
+Layers.regionLayer = new L.LayerGroup();
 
 Layers.islandLayer.addTo(map);
 Layers.wallLayer.addTo(map);
+Layers.regionLayer.addTo(map);
+
+const borderRadius = 25000
+L.circle([0, 0], {radius: borderRadius, color: "#ff0044", weight: 3, fill: false}).addTo(Layers.regionLayer);
 
 
 L.control.mousePosition({ separator: ',', lngFirst: true, numDigits: -1 }).addTo(map);
@@ -120,8 +123,8 @@ bannerOverlay.addTo(map);
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
   .then(csv => parseSheetCSV(csv))
 
-asyncFetch('wallData.json')
-  .then(json => parseWallJson(json))
+asyncFetch('regionData.json')
+  .then(json => parseRegionJson(json))
 
 function parseSheetCSV(csv) {
   var rows = csv.replace(/\r/g, '').split('\n');
@@ -163,31 +166,50 @@ function parseSheetCSV(csv) {
   }
 }
 
-function parseWallJson(json) {
+function parseRegionJson(json) {
   var obj = JSON.parse(json)
 
-  for (const regionType in obj) {
-    const region = obj[regionType];
-
-    // var regionType = regionType
-    // var regionThickness = region.Thickness
-
-    region.Segments.forEach(segment => {
+  for (const i in obj['walls']) {
+    var wall = obj['walls'][i]
+    // var regionThickness = wall.Thickness
+    lines = []
+    wall.Segments.forEach(segment => {
       var [x1, z1] = rotateXZ(parseFloat(segment[0]), parseFloat(segment[1]))
       var [x2, z2] = rotateXZ(parseFloat(segment[2]), parseFloat(segment[3]))
+      lines.push([x1, z1],[x2, z2])
+    });
 
-      var polylineOptions = {
-        color : getRegionColor(regionType),
-        fill : false,
+    var polylineOptions = {
+        color: getWallColor(wall.Type),
+        fill: false,
         interactive : false,
         opacity: 1,
-        stroke : true,
-        weight : 10
+        stroke: true,
+        weight: 10
       }
 
-      var polyline = L.polyline([[x1, z1], [x2, z2]], polylineOptions).addTo(Layers.wallLayer);
-    });
+      var polyline = L.polyline(lines, polylineOptions).addTo(Layers.wallLayer);
   }
+
+  for (const i in obj['regions']) {
+    var region = obj['regions'][i]
+
+    points = []
+    region.Points.forEach(segment => {
+      var [x, z] = rotateXZ(parseFloat(segment[0]), parseFloat(segment[1]))
+      points.push([x, z])
+    });
+    var polygonOptions = {
+      color: getBiomeColor(region.Type),
+      fill: true,
+      fillOpacity: 0.5,
+      interactive: false,
+      stroke: false,
+    }
+
+    var polygon = L.polygon(points, polygonOptions).addTo(Layers.regionLayer).bringToBack();
+  }
+  L.circle([0, 0], {radius: 25000, stroke: false, fillColor: '#3a4466', fillOpacity: 1.0 }).addTo(Layers.regionLayer).bringToBack();
 }
 
 function createHeraldSpawnMarker(islandData) {
@@ -210,11 +232,10 @@ function createHeraldSpawnMarker(islandData) {
 
 function createIslandMarker(islandData) {
 
-  var regionColor = (islandData.Region != '' ? getRegionColor(islandData.Region) : '#ffffff')
   var biomeColor = (islandData.Biome != '' ? getBiomeColor(islandData.Biome) : '#ffffff')
 
   var fillColor = biomeColor
-  var borderColor = darkenHexColor(regionColor)
+  var borderColor = darkenHexColor(biomeColor)
 
   var islandDisplayName = islandData.Name.replaceAll('_', ' ')
   var isVisited = localStorage.getItem(isVisitedStorageKey+islandData.Name) === 'true'
@@ -269,7 +290,7 @@ function createIslandMarker(islandData) {
 
   workshopLink = (islandData.Workshop == '' ? islandDisplayName : '<a href="' + islandData.Workshop + '" target="_blank">' + islandDisplayName + '</a>')
   creator = (islandData.Creator == '' ? 'missing Creator': islandData.Creator)
-  biome = (islandData.Biome == '' ? 'Not Reported': '<span style="color:'+ getBiomeColor(islandData.Biome) +'">'+ islandData.Biome +'<span/>')
+  biome = (islandData.Biome == '' ? 'Not Reported': '<span style="color:'+ biomeColor +'">'+ islandData.Biome +'<span/>')
 
   popupHtml = `
     <b>#${islandData.ID} - ${workshopLink} - ${biome}</b><br>
@@ -345,8 +366,8 @@ async function asyncFetch(url) {
   }
 }
 
-function getRegionColor(region) {
-  var color = "#f6757a"
+function getWallColor(region) {
+  var color = "#ff0044"
   if (region == "WindRegion1") color = "#c0cbdc"
   if (region == "WindRegion2") color = "#8b9bb4"
   if (region == "StormRegion4") color = "#124e89"
@@ -354,11 +375,11 @@ function getRegionColor(region) {
 }
 
 function getBiomeColor(biome) {
-  var color = "#f6757a"
+  var color = "#c0cbdc"
   if (biome == "Green Pines") color = "#63c74d"
   if (biome == "Azure Grove") color = "#0099db"
   if (biome == "Atlas Heights") color = "#124e89"
-  if (biome == "Midlands") color = "#f77622"
+  if (biome == "Midlands") color = "#262b44"
   return color
 }
 
