@@ -2,8 +2,7 @@ import math
 from shapely.geometry import LineString
 from shapely.ops import polygonize, unary_union
 import re
-import sys
-import json
+import csv
 import matplotlib.pyplot as plt
 
 BORDER_RADIUS = 25000
@@ -102,14 +101,15 @@ if __name__ == "__main__":
     segments = []
     points = []
     data = {
-        "walls": {},
-        "regions": {}
+        "walls": [],
+        "regions": []
     }
     
-    with open('cmd/NinesWallData.txt', 'r') as file:
+    with open('NinesWallData.txt', 'r') as file:
         lines = file.readlines()
     
     lastX, lastY = None, None
+    lastPos = [0, 0]
     curWall = -1
     for line in lines:
         line = line.strip()
@@ -122,25 +122,38 @@ if __name__ == "__main__":
             x1, z1 = float(x1), float(z1)
             x2, z2 = float(x2), float(z2)
             
-            # Initialize region if it doesn't exist
+            # new wall detected
             if lastX != x1 and lastY != z1:
+                if curWall != -1:
+                    data['walls'][curWall]["Points"].append(lastPos)
                 curWall+=1
-                data['walls'][curWall] = {
+                data['walls'].append({
                     "Type": region_name,
                     "Thickness": int(thickness),
-                    "Segments": []
-                }
-            
-            if euclidean_distance([x1, z1], [0, 0]) > BORDER_RADIUS+50 or euclidean_distance([x2, z2], [0, 0]) > BORDER_RADIUS+50:
-                lastX, lastY = x2, z2
-                continue
-            
-            data['walls'][curWall]["Segments"].append([x1, z1, x2, z2])
-            
+                    "Points": []
+                })
+                
             lastX, lastY = x2, z2
+            
+            p1Dist = euclidean_distance([x1, z1], [0, 0])
+            p2Dist = euclidean_distance([x2, z2], [0, 0])
+            if p1Dist > BORDER_RADIUS and p2Dist > BORDER_RADIUS:
+                continue
+            elif p1Dist <= BORDER_RADIUS and p2Dist > BORDER_RADIUS:
+                scale = BORDER_RADIUS / p2Dist
+                x2, z2 = x2 * scale, z2 * scale
+            elif p1Dist > BORDER_RADIUS and p2Dist <= BORDER_RADIUS:
+                scale = BORDER_RADIUS / p1Dist
+                x1, z1 = x1 * scale, z1 * scale
+            lastPos = [x2, z2]
+            
+            data['walls'][curWall]["Points"].append([x1, z1])
+            
             segments.append([(x1, z1), (x2, z2)])
             points.append((x1, z1))
             points.append((x2, z2))
+    
+    data['walls'][curWall]["Points"].append(lastPos)
             
     unique_points = list(set(points))
     
@@ -169,19 +182,19 @@ if __name__ == "__main__":
     # Midlands
     biomes = [
         "Midlands", # 0
-        "", # 1
-        "", # 2
-        "Green Pines", # 3
-        "", # 4
+        "Azure Grove", # 1
+        "Green Pines", # 2
+        "Azure Grove", # 3
+        "Atlas Heights", # 4
         "Atlas Heights", # 5
         "Azure Grove", # 6
         "Green Pines", # 7
-        "", # 8
-        "Midlands", # 9
-        "Midlands", # 10
-        "Azure Grove", # 11
-        "Atlas Heights", # 12
-        "", # 13
+        "Midlands", # 8
+        "Atlas Heights", # 9
+        "Azure Grove", # 10
+        "Midlands", # 11
+        "Green Pines", # 12
+        "Atlas Heights", # 13
     ]
     
     colors = []
@@ -196,18 +209,38 @@ if __name__ == "__main__":
     # ]
     
     for i, poly in enumerate(mapped_polygons):
-        data['regions'][i] = {
+        data['regions'].append({
             "Type": biomes[i],
-            "Name": "",
             "Points": []
-        }
+        })
         data['regions'][i]['Points'] = poly
     
     print(f"Found {len(data['walls'])} walls")
     print(f"Found {len(data['regions'])} regions")
     
-    with open("regionData.json", 'w') as f:
-        json.dump(data, f, indent=None)
+    # with open("regionData.json", 'w') as f:
+    #     json.dump(data, f, indent=None)
+    
+    with open('regionData.csv', 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+
+        # Write the header row
+        writer.writerow(["Type", "Name", "Type", "PosX...", "PosY..."])
+
+        for wall in data['walls']:
+            wallData = ['wall', '', wall['Type']]
+            for point in wall['Points']:
+                wallData.extend(point)
+            
+            writer.writerow(wallData)
+        
+        for region in data['regions']:
+            regionData = ['region', '', region['Type']]
+            for point in region['Points']:
+                regionData.extend(point)
+            
+            writer.writerow(regionData)
+            
     
     # Visualize
     plot_polygons(mapped_polygons, colors)

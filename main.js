@@ -121,95 +121,112 @@ bannerOverlay.onAdd = function(map) {
 bannerOverlay.addTo(map);
 
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
-  .then(csv => parseSheetCSV(csv))
+  .then(csvText => parseIslandCSV(csvText))
 
-asyncFetch('regionData.json')
-  .then(json => parseRegionJson(json))
+// asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=903006349&single=true&output=csv')
+asyncFetch('regionData.csv')
+  .then(csvText => parseRegionCSV(csvText))
 
-function parseSheetCSV(csv) {
-  var rows = csv.replace(/\r/g, '').split('\n');
-  for (let i = 0; i < rows.length; i++) {
-    var regex = /(?:,|^)("(?:(?:"")*[^"]*)*"|[^",]*)/g;
-    var values = [...rows[i].matchAll(regex)].map(m => m[1].replace(/"/g, ''));
-
+function parseIslandCSV(csvText) {
+  var csvList = parseCSV(csvText)
+  csvList.forEach(values => {
     if (values[0] == '' || isNaN(values[0])) {
-      continue
+      return
     }
-    // id, Name, PosX, PosY, PosZ, Region, Creator, Workshop, HasArk, Databanks, Large Chests, Description, HasImage, Biome
+    // id, Name, PosX, PosY, PosZ, Biome, Creator, Workshop, HasArk, Databanks, Large Chests, Description, HasImage
     var islandData = {
       ID: values[0],
       Name: values[1],
       X: values[2],
       Y: values[3],
       Z: values[4],
-      Region: values[5],
+      Biome: values[5],
       Creator: values[6],
       Workshop: values[7],
       HasArk: values[8],
       Databanks: values[9],
       Chests: values[10],
       Description: values[11],
-      HasImage: values[12],
-      Biome: values[13]
+      HasImage: values[12]
     }
     var [rotatedX, rotatedZ] = rotateXZ(islandData.X, islandData.Z)
     islandData.X = Math.round(rotatedX * 100) / 100
     islandData.Z = Math.round(rotatedZ * 100) / 100
 
     if (islandData.Name == "Herald_Spawn") {
-      continue
+      return
       createHeraldSpawnMarker(islandData)
     } else {
       createIslandMarker(islandData)
     }
     
-  }
+  });
 }
 
-function parseRegionJson(json) {
-  var obj = JSON.parse(json)
-
-  for (const i in obj['walls']) {
-    var wall = obj['walls'][i]
-    // var regionThickness = wall.Thickness
-    lines = []
-    wall.Segments.forEach(segment => {
-      var [x1, z1] = rotateXZ(parseFloat(segment[0]), parseFloat(segment[1]))
-      var [x2, z2] = rotateXZ(parseFloat(segment[2]), parseFloat(segment[3]))
-      lines.push([x1, z1],[x2, z2])
-    });
-
-    var polylineOptions = {
-        color: getWallColor(wall.Type),
-        fill: false,
-        interactive : false,
-        opacity: 1,
-        stroke: true,
-        weight: 10
-      }
-
-      var polyline = L.polyline(lines, polylineOptions).addTo(Layers.wallLayer);
-  }
-
-  for (const i in obj['regions']) {
-    var region = obj['regions'][i]
-
-    points = []
-    region.Points.forEach(segment => {
-      var [x, z] = rotateXZ(parseFloat(segment[0]), parseFloat(segment[1]))
-      points.push([x, z])
-    });
-    var polygonOptions = {
-      color: getBiomeColor(region.Type),
-      fill: true,
-      fillOpacity: 0.5,
-      interactive: false,
-      stroke: false,
+function parseRegionCSV(csvText) {
+var csvList = parseCSV(csvText)
+  csvList.forEach(values => {
+    if (values[0] == '' || !(values[0] == 'wall' || values[0] == 'region')) {
+      return
+    }
+    
+    var data = {
+      Name: values[1],
+      Type: values[2],
+      Points: []
     }
 
-    var polygon = L.polygon(points, polygonOptions).addTo(Layers.regionLayer).bringToBack();
-  }
+    // pair [x, y, x, y...] into [[x, y], [x, y]...] 
+    for (let i = 3; i < values.length; i += 2) {
+      var [rotatedX, rotatedZ] = rotateXZ(values[i], values[i + 1])
+      data.Points.push([rotatedX, rotatedZ]);
+    }
+    
+    if (values[0] == 'wall') {
+      createWall(data)
+    } else if (values[0] == 'region') {
+      createRegion(data)
+    }
+  });
   L.circle([0, 0], {radius: 25000, stroke: false, fillColor: '#3a4466', fillOpacity: 1.0 }).addTo(Layers.regionLayer).bringToBack();
+}
+
+function parseCSV(csvText) {
+  if (csvText == '') return ''
+  var csvList = []
+
+  var rows = csvText.replace(/\r/g, '').split('\n');
+  for (let i = 0; i < rows.length; i++) {
+    var regex = /(?:,|^)("(?:(?:"")*[^"]*)*"|[^",]*)/g;
+    csvList.push([...rows[i].matchAll(regex)].map(m => m[1].replace(/"/g, '')));
+  }
+
+  return csvList
+}
+
+function createWall(wallData) {
+  var polylineOptions = {
+      color: getWallColor(wallData.Type),
+      fill: false,
+      interactive : false,
+      opacity: 1,
+      stroke: true,
+      weight: 10
+    }
+
+    var polyline = L.polyline(wallData.Points, polylineOptions).addTo(Layers.wallLayer);
+}
+
+function createRegion(regionData) {
+  var polygonOptions = {
+    color: getBiomeColor(regionData.Type),
+    fill: true,
+    fillOpacity: 0.5,
+    interactive: false,
+    stroke: false,
+  }
+
+  var polygon = L.polygon(regionData.Points, polygonOptions).addTo(Layers.regionLayer).bringToBack();
 }
 
 function createHeraldSpawnMarker(islandData) {
