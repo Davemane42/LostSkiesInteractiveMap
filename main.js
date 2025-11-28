@@ -25,12 +25,13 @@ map.on('zoomanim', onZoomAnim);
 map.on('zoomend', onZoomEnd);
 
 
-var Layers = {}
-Layers.zoomedIslandLayer = new L.LayerGroup();
-Layers.islandLayer = new L.LayerGroup();
-Layers.markerLayer = new L.LayerGroup();
-Layers.wallLayer = new L.LayerGroup();
-Layers.regionLayer = new L.LayerGroup();
+var Layers = {
+  zoomedIslandLayer: new L.LayerGroup(),
+  islandLayer: new L.LayerGroup(),
+  markerLayer: new L.LayerGroup(),
+  wallLayer: new L.LayerGroup(),
+  regionLayer: new L.LayerGroup()
+}
 
 Layers.islandLayer.addTo(map);
 Layers.wallLayer.addTo(map);
@@ -68,7 +69,7 @@ var searchControl = new L.Control.Search({
       var props = records[key].layer.options
       if (
         props.name.toLowerCase().includes(searchText) ||
-        //props.creator.toLowerCase().includes(searchText) ||
+        props.creator.toLowerCase().includes(searchText) ||
         props.id.toLowerCase().includes(searchText)
       ) {
         filteredResults[key] = records[key]
@@ -106,19 +107,49 @@ staticOverlay.onAdd = function(map) {
 
 staticOverlay.addTo(map);
 
-var bannerOverlay = L.control({
+var legendOverlay = L.control({
   position: 'topright'
 });
 
-bannerOverlay.onAdd = function(map) {
+legendOverlay.onAdd = function(map) {
   var div = L.DomUtil.create('div', 'static-overlay');
-  div.innerHTML = `<h3 style="color: white; background-color: black; text-align: center; margin: auto;">1.0 WIP</br>contact "Davemane42"</br>on Discord to help</h3>`
+  // div.innerHTML = `<h3 style="color: white; background-color: black; text-align: center; margin: auto;">1.0 WIP</br>contact "Davemane42"</br>on Discord to help</h3>`
+  var gpColor = getBiomeColor("Green Pines")
+  var agColor = getBiomeColor("Azure Grove")
+  var ahColor = getBiomeColor("Atlas Heights")
+  var mColor = getBiomeColor("Midlands")
+  var wr1Color = getWallColor("WindRegion1")
+  var wr2Color = getWallColor("WindRegion2")
+  var sr4Color = getWallColor("StormRegion4")
+
+  div.setAttribute('style', 'box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5); color: white; background-color: #5a6988; padding: 10px; border-radius: 10px;');
+  div.innerHTML = `
+    <div >
+      <b>Biomes:</b></br>
+      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(gpColor)+`" stroke-width="3" fill="`+gpColor+`" /> </svg>
+      <a style="color:`+gpColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/wiki/Green_Pines">Green Pines</a></br>
+      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(agColor)+`" stroke-width="3" fill="`+agColor+`" /> </svg>
+      <a style="color:`+agColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/wiki/Azure_Grove">Azure Grove</a></br>
+      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(ahColor)+`" stroke-width="3" fill="`+ahColor+`" /> </svg>
+      <a style="color:`+ahColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/">Atlas Heights</a></br>
+      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(mColor)+`" stroke-width="3" fill="`+mColor+`" /> </svg>
+      <a style="color:`+mColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/">Midlands</a></br>
+
+      </br><b>Walls:</b></br>
+      <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+wr1Color+`" /> </svg>
+      <b style="color:`+wr1Color+`;">Wind Wall</b></br>
+      <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+wr2Color+`" /> </svg>
+      <b style="color:`+wr2Color+`;">Wind Wall</b></br>
+      <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+sr4Color+`" /> </svg>
+      <b style="color:`+sr4Color+`;">Storm Wall</b></br>
+    </div>
+  `
   L.DomEvent.disableClickPropagation(div);
   L.DomEvent.disableScrollPropagation(div);
   return div;
 };
 
-bannerOverlay.addTo(map);
+legendOverlay.addTo(map);
 
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
   .then(csvText => parseIslandCSV(csvText))
@@ -301,7 +332,7 @@ function createIslandMarker(islandData) {
     }),
     name: islandDisplayName,
     id: islandData.ID,
-    //creator: islandData.Creator
+    creator: islandData.Creator
   }
   var zoomedIslandMarker = new L.Marker([islandData.X, islandData.Z], zoomedIslandMarkerOptions).addTo(Layers.zoomedIslandLayer);
 

@@ -1,7 +1,7 @@
 import os
 from PIL import Image
 
-def process_images(input_folder, output_folder, width_resized=320, square_size=96):
+def process_images(input_folder, output_folder, width_resized=320, square_size=96, force=False):
     """
     Process all images in the input folder:
     1. Create a resized version with specified width (maintaining aspect ratio)
@@ -13,7 +13,7 @@ def process_images(input_folder, output_folder, width_resized=320, square_size=9
         os.makedirs(output_folder)
     
     # Supported image extensions
-    supported_extensions = ('.jpg', '.jpeg', '.png')
+    supported_extensions = ('.jpg', '.jpeg', '.png', '.webp')
     
     # Process each file in the input folder
     for filename in os.listdir(input_folder):
@@ -21,38 +21,53 @@ def process_images(input_folder, output_folder, width_resized=320, square_size=9
             try:
                 # Open the image file
                 filepath = os.path.join(input_folder, filename)
+                split_filename = os.path.splitext(filename)[0]
                 with Image.open(filepath) as img:
+                    msg = ""
                     
-                    img.save(
-                        os.path.join(output_folder, f"{os.path.splitext(filename)[0]}.webp"),
-                        'WEBP',
-                        optimize = True,
-                        quality=80  # Adjust quality for compression (0-100)
-                    )
+                    # Fullsize
+                    out_filename = os.path.join(output_folder, f"{split_filename}.webp")
+                    if force or not os.path.isfile(out_filename):
+                        img.save(
+                            out_filename,
+                            'WEBP',
+                            optimize = True,
+                            quality=80  # Adjust quality for compression (0-100)
+                        )
+                    else:
+                        msg += " Fullsize already exist,"
                     
-                    # Process and save resized version
-                    target_height = int(width_resized * img.size[1] / img.size[0])
-                    resized_img = img.resize((width_resized, target_height), Image.LANCZOS)
+                    # Resized
+                    resized_filename = os.path.join(output_folder, f"{split_filename}_small.webp")
+                    if force or not os.path.isfile(resized_filename):
+                        target_height = int(width_resized * img.size[1] / img.size[0])
+                        resized_img = img.resize((width_resized, target_height), Image.LANCZOS)
+                        resized_img.save(
+                            resized_filename,
+                            'WEBP',
+                            optimize = True,
+                            quality=80  # Adjust quality for compression (0-100)
+                        )
+                    else:
+                        msg += " Resized already exist,"
                     
-                    resized_filename = f"{os.path.splitext(filename)[0]}_small.webp"
-                    resized_img.save(
-                        os.path.join(output_folder, resized_filename),
-                        'WEBP',
-                        optimize = True,
-                        quality=80  # Adjust quality for compression (0-100)
-                    )
+                    # square cropped preview
+                    square_filename = os.path.join(output_folder, f"{split_filename}_square.webp")
+                    if force or not os.path.isfile(square_filename):
+                        square_img = crop_center_square(img, square_size)
+                        square_img.save(
+                            square_filename,
+                            'WEBP',
+                            optimize = True,
+                            quality=80  # Adjust quality for compression (0-100)
+                        )
+                    else:
+                        msg += " Cropped already exist,"
                     
-                    # Process and save square cropped version
-                    square_img = crop_center_square(img, square_size)
-                    square_filename = f"{os.path.splitext(filename)[0]}_square.webp"
-                    square_img.save(
-                        os.path.join(output_folder, square_filename),
-                        'WEBP',
-                        optimize = True,
-                        quality=80  # Adjust quality for compression (0-100)
-                    )
-                    
-                    print(f"Processed {filename} successfully")
+                    if msg == "":
+                        print(f"Processed {filename}: Successfully")
+                    else:
+                        print(f"Processed {filename}: Already Exist")
                     
             except Exception as e:
                 print(f"Error processing {filename}: {str(e)}")
@@ -78,5 +93,4 @@ if __name__ == "__main__":
     input_folder = "../img/rawIslandImages"  # Folder containing original images
     output_folder = "../img/islands"  # Folder to save processed images
     
-    # Run the processing
     process_images(input_folder, output_folder)
