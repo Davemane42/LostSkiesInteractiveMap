@@ -54,3 +54,53 @@ body,
 .leaflet-popup-content a {
     color: #ff0044;
 }
+
+.leaflet-popup-content img {
+    display: block;
+    border-radius: 3px;
+}
+
+.leaflet-popup-content textarea {
+    resize: none;
+    width: 100%;
+    background: #5a6988;
+    color: white;
+    border: none;
+    /* padding: 5px 10px; */
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bolder;
+}
+.leaflet-popup-content textarea::placeholder {
+    color: #c0cbdc;
+}
+
+.static-overlay {
+    color: #fff;
+    background-color: #5a6988;
+    border-radius: 10px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+.map-button {
+    background: #181425;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bolder;
+}
+
+.map-button:hover {
+    background: #262b44;
+}
+
+.legend-content {
+    margin: 5px;
+}
+
+.legend-content a {
+    font-weight: bold;
+    text-decoration: unset;
+}

@@ -2,6 +2,7 @@
 var Zoom = -4;
 
 const isVisitedStorageKey = "isVisited_"
+const personalNoteStorageKey = "personalNote_"
 var Islands = {}
 
 const map = L.map('map', {
@@ -94,7 +95,7 @@ var staticOverlay = L.control({
 });
 
 staticOverlay.onAdd = function(map) {
-  var div = L.DomUtil.create('div', 'static-overlay');
+  var div = L.DomUtil.create('div', '');
   div.innerHTML = `
     <a target="_blank" href="https://github.com/Davemane42/LostSkiesInteractiveMap">
       <img width="48px" src="img/github-mark-white.svg">
@@ -111,37 +112,47 @@ var legendOverlay = L.control({
   position: 'topright'
 });
 
+function toggleLegend() {
+  const legendElement = document.querySelector('.legend-content');
+  if (legendElement) {
+    const isVisible = legendElement.style.display !== 'none';
+    legendElement.style.display = isVisible ? 'none' : 'block';
+  }
+}
+
+function createLegendBiome(name, baseColor, link) {
+  return `
+    <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(baseColor)+`" stroke-width="3" fill="`+baseColor+`" /> </svg>
+    <a style="color:`+baseColor+`;" target="_blank" href="`+link+`">`+name+`</a>
+  `
+}
+
+function createLegendWall(name, baseColor) {
+  return `
+    <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+baseColor+`" /> </svg>
+    <b style="color:`+baseColor+`;">`+name+`</b>
+  `
+}
+
 legendOverlay.onAdd = function(map) {
   var div = L.DomUtil.create('div', 'static-overlay');
   // div.innerHTML = `<h3 style="color: white; background-color: black; text-align: center; margin: auto;">1.0 WIP</br>contact "Davemane42"</br>on Discord to help</h3>`
-  var gpColor = getBiomeColor("Green Pines")
-  var agColor = getBiomeColor("Azure Grove")
-  var ahColor = getBiomeColor("Atlas Heights")
-  var mColor = getBiomeColor("Midlands")
-  var wr1Color = getWallColor("WindRegion1")
-  var wr2Color = getWallColor("WindRegion2")
-  var sr4Color = getWallColor("StormRegion4")
 
-  div.setAttribute('style', 'box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5); color: white; background-color: #5a6988; padding: 10px; border-radius: 10px;');
   div.innerHTML = `
-    <div >
+    <div>
+      <button class="map-button" onclick="toggleLegend();">Toggle Legend</button>
+    </div>
+    <div class="legend-content">
       <b>Biomes:</b></br>
-      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(gpColor)+`" stroke-width="3" fill="`+gpColor+`" /> </svg>
-      <a style="color:`+gpColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/wiki/Green_Pines">Green Pines</a></br>
-      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(agColor)+`" stroke-width="3" fill="`+agColor+`" /> </svg>
-      <a style="color:`+agColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/wiki/Azure_Grove">Azure Grove</a></br>
-      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(ahColor)+`" stroke-width="3" fill="`+ahColor+`" /> </svg>
-      <a style="color:`+ahColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/">Atlas Heights</a></br>
-      <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(mColor)+`" stroke-width="3" fill="`+mColor+`" /> </svg>
-      <a style="color:`+mColor+`; font-weight: bold; text-decoration: unset;" target="_blank" href="https://lostskies.wiki.gg/">Midlands</a></br>
+      `+createLegendBiome("Green Pines", getBiomeColor("Green Pines"), "https://lostskies.wiki.gg/wiki/Green_Pines")+`</br>
+      `+createLegendBiome("Azure Grove", getBiomeColor("Azure Grove"), "https://lostskies.wiki.gg/wiki/Azure_Grove")+`</br>
+      `+createLegendBiome("Atlas Heights", getBiomeColor("Atlas Heights"), "https://lostskies.wiki.gg/")+`</br>
+      `+createLegendBiome("Midlands", getBiomeColor("Midlands"), "https://lostskies.wiki.gg/")+`</br>
 
       </br><b>Walls:</b></br>
-      <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+wr1Color+`" /> </svg>
-      <b style="color:`+wr1Color+`;">Wind Wall</b></br>
-      <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+wr2Color+`" /> </svg>
-      <b style="color:`+wr2Color+`;">Wind Wall</b></br>
-      <svg width="16px" height="16px"> <line x1="2" y1="2" x2="14" y2="14" stroke-width="3" stroke="`+sr4Color+`" /> </svg>
-      <b style="color:`+sr4Color+`;">Storm Wall</b></br>
+      `+createLegendWall("Wind Wall", getWallColor("WindRegion1"))+`</br>
+      `+createLegendWall("Wind Wall", getWallColor("WindRegion2"))+`</br>
+      `+createLegendWall("Storm Wall", getWallColor("StormRegion4"))+`</br>
     </div>
   `
   L.DomEvent.disableClickPropagation(div);
@@ -291,6 +302,11 @@ function createIslandMarker(islandData) {
     isVisited = islandData.isVisited
   }
 
+  var personalNote = localStorage.getItem(personalNoteStorageKey+islandData.Name)
+  if (islandData.hasOwnProperty("personalNote")) {
+    personalNote = islandData.personalNote
+  }
+
   if (isVisited) {
     borderColor = '#ff0044'
   }
@@ -341,23 +357,26 @@ function createIslandMarker(islandData) {
   biome = (islandData.Biome == '' ? 'Not Reported': '<span style="color:'+ biomeColor +'">'+ islandData.Biome +'<span/>')
 
   popupHtml = `
+    <div>
     <b>#${islandData.ID} - ${workshopLink} - ${biome}</b><br>
     <b>By:</b> ${creator}<br><br>
     ${(islandData.Description !== '' ? '<details><summary>Description:</summary>' + islandData.Description + '</details><br>' : '')}
     <b>Altitute:</b> ${(1200 + Math.round(islandData.Y / 100) * 100)}m<br>
     <b>Has an Ark:</b> ${(islandData.HasArk == 'TRUE' ? "✅" : "❌")}<br>
     <b>Databanks:</b> ${(islandData.Databanks == '' ? 'Not Reported': islandData.Databanks)}<br>
-    <b>Large Chests:</b> ${(islandData.Chests == '' ? 'Not Reported': islandData.Chests)}<br><br>
-    ${(islandData.HasImage == "TRUE" ? '<a href="img/islands/'+islandData.Name+'.webp" target="_blank"><img src="img/islands/'+islandData.Name+'_small.webp" width="320"></a><br>' : '')}
+    <b>Large Chests:</b> ${(islandData.Chests == '' ? 'Not Reported': islandData.Chests)}<br>
+    ${(islandData.HasImage == "TRUE" ? '<br><div><a href="img/islands/'+islandData.Name+'.webp" target="_blank"><img src="img/islands/'+islandData.Name+'_small.webp"></a></div><br>' : '')}
+    <textarea rows=5 id=${personalNoteStorageKey+islandData.Name} placeholder="Write your personal notes here..." oninput="handleTextAreaChange(this.value, '${islandData.Name}')">${personalNote != null ? personalNote : ""}</textarea><br>
     <b>Visited: </b> <input type="checkbox" id=${isVisitedStorageKey+islandData.Name} ${isVisited ? "checked" : ""} onchange="handleVisitedCheckbox('${islandData.Name}', this.checked)">
+    </div>
   `.replace(/[\r\n\t]/g, '')
   //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
   //   <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
-
+  
   var popupOptions = {
     minWidth: '320'
   }
-
+  
   zoomedOutMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
   islandMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
   zoomedIslandMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
@@ -374,6 +393,14 @@ function handleIslandPopupOpen(islandName) {
   var checkbox = document.getElementById(isVisitedStorageKey+islandName)
   var isVisited = localStorage.getItem(isVisitedStorageKey+islandName) === 'true'
   checkbox.checked = isVisited
+
+  var textarea = document.getElementById(personalNoteStorageKey+islandName)
+  var personalNote = localStorage.getItem(personalNoteStorageKey+islandName)
+  textarea.value = personalNote != null ? personalNote : ""
+}
+
+function handleTextAreaChange(text, islandName) {
+  localStorage.setItem(personalNoteStorageKey+islandName, text)
 }
 
 function handleVisitedCheckbox(islandName, isVisited) {
