@@ -1,9 +1,37 @@
 
 var Zoom = -4;
 
-const isVisitedStorageKey = "isVisited_"
-const personalNoteStorageKey = "personalNote_"
 var Islands = {}
+
+const LegacyIsVisitedStorageKey = "isVisited_"
+const LegacyPersonalNoteStorageKey = "personalNote_"
+
+function migrateLocalStorage() {
+  var keysToRemove = []
+
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i)
+    if (key.startsWith(LegacyIsVisitedStorageKey)) {
+      var name = key.slice(LegacyIsVisitedStorageKey.length)
+      if (!currentProfile.islandsData[name]) currentProfile.islandsData[name] = {}
+      currentProfile.islandsData[name].IsVisited = localStorage.getItem(key) === 'true'
+      keysToRemove.push(key)
+    } else if (key.startsWith(LegacyPersonalNoteStorageKey)) {
+      var name = key.slice(LegacyPersonalNoteStorageKey.length)
+      if (!currentProfile.islandsData[name]) currentProfile.islandsData[name] = {}
+      currentProfile.islandsData[name].PersonalNote = localStorage.getItem(key)
+      keysToRemove.push(key)
+    }
+  }
+
+  if (keysToRemove.length > 0) {
+    saveProfiles()
+    keysToRemove.forEach(key => localStorage.removeItem(key))
+    console.log('Migrated ' + keysToRemove.length + ' legacy storage keys to IslandData')
+  }
+}
+
+migrateLocalStorage()
 
 const map = L.map('map', {
   crs: L.CRS.Simple,
@@ -108,7 +136,7 @@ staticOverlay.onAdd = function(map) {
 
 staticOverlay.addTo(map);
 
-var legendOverlay = L.control({
+var settingOverlay = L.control({
   position: 'topright'
 });
 
@@ -117,8 +145,21 @@ function toggleLegend() {
   if (legendElement) {
     const isVisible = legendElement.style.display !== 'none';
     legendElement.style.display = isVisible ? 'none' : 'block';
+    Settings.LegendOpen = !isVisible
+    saveSettings()
   }
 }
+
+function toggleSettings() {
+  var modal = document.getElementById('settings-modal')
+  if (modal.style.display === 'none') {
+    updateProfileSelect()
+    modal.style.display = 'flex'
+  } else {
+    modal.style.display = 'none'
+  }
+}
+
 
 function createLegendBiome(name, baseColor, link) {
   return `
@@ -134,33 +175,36 @@ function createLegendWall(name, baseColor) {
   `
 }
 
-legendOverlay.onAdd = function(map) {
+settingOverlay.onAdd = function(map) {
   var div = L.DomUtil.create('div', 'static-overlay');
-  // div.innerHTML = `<h3 style="color: white; background-color: black; text-align: center; margin: auto;">1.0 WIP</br>contact "Davemane42"</br>on Discord to help</h3>`
 
   div.innerHTML = `
-    <div>
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+      <button class="map-button" onclick="toggleSettings();">Settings</button>
       <button class="map-button" onclick="toggleLegend();">Toggle Legend</button>
-    </div>
-    <div class="legend-content">
-      <b>Biomes:</b></br>
-      `+createLegendBiome("Green Pines", getBiomeColor("Green Pines"), "https://lostskies.wiki.gg/wiki/Green_Pines")+`</br>
-      `+createLegendBiome("Azure Grove", getBiomeColor("Azure Grove"), "https://lostskies.wiki.gg/wiki/Azure_Grove")+`</br>
-      `+createLegendBiome("Atlas Heights", getBiomeColor("Atlas Heights"), "https://lostskies.wiki.gg/")+`</br>
-      `+createLegendBiome("Midlands", getBiomeColor("Midlands"), "https://lostskies.wiki.gg/")+`</br>
+      <div class="legend-content" style="display: `+ (Settings.LegendOpen ? 'block' : 'none') +`">
+        <div style="margin: 5px;">
+          <b>Biomes:</b></br>
+          `+createLegendBiome("Green Pines", getBiomeColor("Green Pines"), "https://lostskies.wiki.gg/wiki/Green_Pines")+`</br>
+          `+createLegendBiome("Azure Grove", getBiomeColor("Azure Grove"), "https://lostskies.wiki.gg/wiki/Azure_Grove")+`</br>
+          `+createLegendBiome("Atlas Heights", getBiomeColor("Atlas Heights"), "https://lostskies.wiki.gg/")+`</br>
+          `+createLegendBiome("Midlands", getBiomeColor("Midlands"), "https://lostskies.wiki.gg/")+`</br>
 
-      </br><b>Walls:</b></br>
-      `+createLegendWall("Wind Wall", getWallColor("WindRegion1"))+`</br>
-      `+createLegendWall("Wind Wall", getWallColor("WindRegion2"))+`</br>
-      `+createLegendWall("Storm Wall", getWallColor("StormRegion4"))+`</br>
+          </br><b>Walls:</b></br>
+          `+createLegendWall("Wind Wall", getWallColor("WindRegion1"))+`</br>
+          `+createLegendWall("Wind Wall", getWallColor("WindRegion2"))+`</br>
+          `+createLegendWall("Storm Wall", getWallColor("StormRegion4"))+`</br>
+        </div>
+      </div>
     </div>
   `
+
   L.DomEvent.disableClickPropagation(div);
   L.DomEvent.disableScrollPropagation(div);
   return div;
 };
 
-legendOverlay.addTo(map);
+settingOverlay.addTo(map);
 
 asyncFetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRfvJ3efJxwK2ld-hnIoB-jdRN-n8U6XR0kSoOqNxcfyEDJiISo1zXlx5N4lci79WLM7tSH-bskeswQ/pub?gid=1976428671&single=true&output=csv')
   .then(csvText => parseIslandCSV(csvText))
@@ -297,15 +341,9 @@ function createIslandMarker(islandData) {
   var borderColor = darkenHexColor(biomeColor)
 
   var islandDisplayName = islandData.Name.replaceAll('_', ' ')
-  var isVisited = localStorage.getItem(isVisitedStorageKey+islandData.Name) === 'true'
-  if (islandData.hasOwnProperty("isVisited")) {
-    isVisited = islandData.isVisited
-  }
-
-  var personalNote = localStorage.getItem(personalNoteStorageKey+islandData.Name)
-  if (islandData.hasOwnProperty("personalNote")) {
-    personalNote = islandData.personalNote
-  }
+  var entry = currentProfile.islandsData[islandData.Name] || {}
+  var isVisited = entry.IsVisited === true
+  var personalNote = entry.PersonalNote ?? null
 
   if (isVisited) {
     borderColor = '#ff0044'
@@ -366,8 +404,8 @@ function createIslandMarker(islandData) {
     <b>Databanks:</b> ${(islandData.Databanks == '' ? 'Not Reported': islandData.Databanks)}<br>
     <b>Large Chests:</b> ${(islandData.Chests == '' ? 'Not Reported': islandData.Chests)}<br>
     ${(islandData.HasImage == "TRUE" ? '<br><div><a href="img/islands/'+islandData.Name+'.webp" target="_blank"><img src="img/islands/'+islandData.Name+'_small.webp"></a></div><br>' : '')}
-    <textarea rows=5 id=${personalNoteStorageKey+islandData.Name} placeholder="Write your personal notes here..." oninput="handleTextAreaChange(this.value, '${islandData.Name}')">${personalNote != null ? personalNote : ""}</textarea><br>
-    <b>Visited: </b> <input type="checkbox" id=${isVisitedStorageKey+islandData.Name} ${isVisited ? "checked" : ""} onchange="handleVisitedCheckbox('${islandData.Name}', this.checked)">
+    <textarea rows=5 id=${"PersonalNoteTextArea"+islandData.Name} placeholder="Write your personal notes here..." oninput="handleTextAreaChange(this.value, '${islandData.Name}')">${personalNote != null ? personalNote : ""}</textarea><br>
+    <b>Visited: </b> <input type="checkbox" id=${"IsVisitedCheckbox"+islandData.Name} ${isVisited ? "checked" : ""} onchange="handleVisitedCheckbox('${islandData.Name}', this.checked)">
     </div>
   `.replace(/[\r\n\t]/g, '')
   //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
@@ -390,34 +428,51 @@ function createIslandMarker(islandData) {
 }
 
 function handleIslandPopupOpen(islandName) {
-  var checkbox = document.getElementById(isVisitedStorageKey+islandName)
-  var isVisited = localStorage.getItem(isVisitedStorageKey+islandName) === 'true'
-  checkbox.checked = isVisited
+  var entry = currentProfile.islandsData[islandName] || {}
 
-  var textarea = document.getElementById(personalNoteStorageKey+islandName)
-  var personalNote = localStorage.getItem(personalNoteStorageKey+islandName)
-  textarea.value = personalNote != null ? personalNote : ""
+  var checkbox = document.getElementById("IsVisitedCheckbox"+islandName)
+  checkbox.checked = entry.IsVisited === true
+
+  var textarea = document.getElementById("PersonalNoteTextArea"+islandName)
+  textarea.value = entry.PersonalNote ?? ""
 }
 
 function handleTextAreaChange(text, islandName) {
-  localStorage.setItem(personalNoteStorageKey+islandName, text)
+  if (!currentProfile.islandsData[islandName]) currentProfile.islandsData[islandName] = {}
+  if (text === '') {
+    delete currentProfile.islandsData[islandName].PersonalNote
+  } else {
+    currentProfile.islandsData[islandName].PersonalNote = text
+  }
+  saveProfiles()
 }
 
 function handleVisitedCheckbox(islandName, isVisited) {
+  if (!currentProfile.islandsData[islandName]) currentProfile.islandsData[islandName] = {}
   if (isVisited) {
-    localStorage.setItem(isVisitedStorageKey+islandName, 'true')
+    currentProfile.islandsData[islandName].IsVisited = true
   } else {
-    localStorage.removeItem(isVisitedStorageKey+islandName)
+    delete currentProfile.islandsData[islandName].IsVisited
   }
+  saveProfiles()
 
+  Islands[islandName].isVisited = isVisited
+  refreshIslandMarker(islandName)
+}
+
+function refreshIslandMarker(islandName) {
   Islands[islandName].Markers[0].unbindPopup().removeFrom(Layers.markerLayer)
   Islands[islandName].Markers[1].unbindPopup().removeFrom(Layers.islandLayer)
   Islands[islandName].Markers[2].unbindPopup().removeFrom(Layers.zoomedIslandLayer)
-
-  Islands[islandName].isVisited = isVisited
-
-  
   createIslandMarker(Islands[islandName])
+}
+
+function refreshAllIslandMarkers() {
+  Object.keys(Islands).forEach(name => {
+    delete Islands[name].isVisited
+    delete Islands[name].personalNote
+    refreshIslandMarker(name)
+  })
 }
 
 const rotateCos = Math.cos(Math.PI / 2)

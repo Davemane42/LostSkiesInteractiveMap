@@ -20,6 +20,33 @@
 </head>
 <body>
 	<div id="map"></div>
+	<div id="settings-modal" style="display: none;">
+		<div class="settings-modal-content">
+			<div class="settings-modal-row" style="justify-content: space-between;">
+				<b>Settings</b>
+				<button class="map-button" onclick="toggleSettings()">✕</button>
+			</div>
+			<div class="settings-modal-section">
+				<b>Profiles</b>
+				<select id="profile-select" onchange="selectProfile(this.value)"></select>
+				<div class="settings-modal-row" style="justify-content: space-between;">
+					<button class="map-button" onclick="createProfile()">New</button>
+					<button class="map-button" onclick="renameProfile()">Rename</button>
+					<button class="map-button" onclick="deleteProfile()">Delete</button>
+					<button class="map-button" onclick="clearProfile()">Clear</button>
+					<button class="map-button" onclick="exportProfileData()">Export</button>
+				</div>
+			</div>
+			<div class="settings-modal-section">
+				<b>Data</b>
+				<div class="settings-modal-row">
+					<button class="map-button" onclick="exportAllData()">Export All</button>
+					<button class="map-button" onclick="importData()">Import</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="profiles.js"></script>
 	<script src="main.js"></script>
 </body>
 </html>

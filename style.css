@@ -75,15 +75,8 @@ body,
     color: #c0cbdc;
 }
 
-.static-overlay {
-    color: #fff;
-    background-color: #5a6988;
-    border-radius: 10px;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
-}
-
 .map-button {
-    background: #181425;
+    background: #262b44;
     color: white;
     border: none;
     padding: 5px 10px;
@@ -93,14 +86,80 @@ body,
 }
 
 .map-button:hover {
-    background: #262b44;
+    background: #3a4466;
 }
 
 .legend-content {
-    margin: 5px;
+    color: #fff;
+    background-color: #5a6988;
+    border-radius: 10px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
 }
 
 .legend-content a {
     font-weight: bold;
     text-decoration: unset;
+}
+
+#settings-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-modal-content {
+    background: #262b44;
+    color: white;
+    border-radius: 10px;
+    /* padding: 20px; */
+    padding: 10px;
+    width: 320px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.settings-modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.settings-modal-section .map-button {
+    background: #5a6988;
+}
+
+.settings-modal-section .map-button:hover {
+    background: #8b9bb4;
+}
+
+.settings-modal-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 5px;
+}
+
+.settings-modal-section select {
+    background: #5a6988;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 5px;
+    cursor: pointer;
+    font-weight: bolder;
+}
+
+.settings-modal-section b,
+.settings-modal-row b {
+    align-self: center;
+    justify-self: center;
 }
