@@ -20,6 +20,8 @@ if (!Settings.activeProfile || !ProfilesData.some(p => p.name === Settings.activ
 
 var currentProfile = ProfilesData.find(p => p.name === Settings.activeProfile)
 
+// --- Functions ---
+
 function saveProfiles() {
   // Delete empty island
   Object.keys(currentProfile.islandsData).forEach(key => {
@@ -71,6 +73,8 @@ function selectProfile(name) {
   refreshAllIslandMarkers()
 }
 
+// --- profiles CRUD ---
+
 function createProfile() {
   var name = prompt('New profile name:').trim()
   if (!name) { alert('No name provided'); return }
@@ -120,33 +124,7 @@ function deleteProfile() {
   refreshAllIslandMarkers()
 }
 
-function getExportDate() {
-  var now = new Date()
-  return String(now.getDate()).padStart(2, '0') + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + now.getFullYear()
-}
-
-function triggerDownload(data, filename) {
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-  var a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(a.href)
-}
-
-function openFilePicker(onLoad) {
-  var input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.json,application/json'
-  input.onchange = function() {
-    var file = input.files[0]
-    if (!file) return
-    var reader = new FileReader()
-    reader.onload = function(e) { onLoad(e.target.result) }
-    reader.readAsText(file)
-  }
-  input.click()
-}
+// --- Export / Import ---
 
 function exportProfileData() {
   var data = { version: islandDataVersion, profiles: [currentProfile] }
@@ -196,4 +174,34 @@ function importData() {
       alert('Import failed: ' + err.message)
     }
   })
+}
+
+// --- Helper ---
+
+function getExportDate() {
+  var now = new Date()
+  return String(now.getDate()).padStart(2, '0') + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + now.getFullYear()
+}
+
+function triggerDownload(data, filename) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  var a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+function openFilePicker(onLoad) {
+  var input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json,application/json'
+  input.onchange = function() {
+    var file = input.files[0]
+    if (!file) return
+    var reader = new FileReader()
+    reader.onload = function(e) { onLoad(e.target.result) }
+    reader.readAsText(file)
+  }
+  input.click()
 }

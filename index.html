@@ -24,29 +24,55 @@
 		<div class="settings-modal-content">
 			<div class="settings-modal-row" style="justify-content: space-between;">
 				<b>Settings</b>
-				<button class="map-button" onclick="toggleSettings()">✕</button>
+				<button class="map-button" onclick="toggleSettings()" style="flex-grow: 0;">✕</button>
 			</div>
 			<div class="settings-modal-section">
 				<b>Profiles</b>
-				<select id="profile-select" onchange="selectProfile(this.value)"></select>
-				<div class="settings-modal-row" style="justify-content: space-between;">
+				<div class="settings-modal-row">
 					<button class="map-button" onclick="createProfile()">New</button>
+					<button class="map-button" onclick="exportProfileData()">Export</button>
+					<button class="map-button" onclick="exportAllData()">Export All</button>
+					<button class="map-button" onclick="importData()">Import</button>
+				</div>
+				<select id="profile-select" onchange="selectProfile(this.value)"></select>
+				<div class="settings-modal-row">
 					<button class="map-button" onclick="renameProfile()">Rename</button>
 					<button class="map-button" onclick="deleteProfile()">Delete</button>
 					<button class="map-button" onclick="clearProfile()">Clear</button>
-					<button class="map-button" onclick="exportProfileData()">Export</button>
 				</div>
 			</div>
 			<div class="settings-modal-section">
-				<b>Data</b>
+				<b>Theme</b>
 				<div class="settings-modal-row">
-					<button class="map-button" onclick="exportAllData()">Export All</button>
-					<button class="map-button" onclick="importData()">Import</button>
+					<button class="map-button" onclick="createCustomTheme()">New</button>
+					<button class="map-button" onclick="exportTheme()">Export</button>
+					<button class="map-button" onclick="importTheme()">Import</button>
+				</div>
+				<select id="theme-select" onchange="applyTheme(this.value)"></select>
+				<div id="theme-user-buttons" class="settings-modal-row">
+					<button class="map-button" onclick="openThemeEditor()">Edit</button>
+					<button class="map-button" onclick="renameCustomTheme()">Rename</button>
+					<button class="map-button" onclick="deleteCustomTheme()">Delete</button>
 				</div>
 			</div>
 		</div>
 	</div>
+	<div id="theme-editor-modal" style="display: none;">
+		<div class="settings-modal-content" style="width: 280px;">
+			<div class="settings-modal-row" style="justify-content: space-between;">
+				<b id="theme-editor-title">Edit Theme</b>
+				<button class="map-button" onclick="closeThemeEditor()" style="flex-grow: 0;">✕</button>
+			</div>
+			<div id="theme-editor-fields" class="theme-editor-grid"></div>
+			<div class="settings-modal-row">
+				<button class="map-button" onclick="saveThemeEditor()" style="flex-grow: 0;">Save</button>
+				<button class="map-button" onclick="closeThemeEditor()" style="flex-grow: 0;">Cancel</button>
+			</div>
+		</div>
+	</div>
+	<script src="migration.js"></script>
 	<script src="profiles.js"></script>
+	<script src="theme.js"></script>
 	<script src="main.js"></script>
 </body>
 </html>

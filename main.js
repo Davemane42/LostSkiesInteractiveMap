@@ -3,36 +3,6 @@ var Zoom = -4;
 
 var Islands = {}
 
-const LegacyIsVisitedStorageKey = "isVisited_"
-const LegacyPersonalNoteStorageKey = "personalNote_"
-
-function migrateLocalStorage() {
-  var keysToRemove = []
-
-  for (var i = 0; i < localStorage.length; i++) {
-    var key = localStorage.key(i)
-    if (key.startsWith(LegacyIsVisitedStorageKey)) {
-      var name = key.slice(LegacyIsVisitedStorageKey.length)
-      if (!currentProfile.islandsData[name]) currentProfile.islandsData[name] = {}
-      currentProfile.islandsData[name].IsVisited = localStorage.getItem(key) === 'true'
-      keysToRemove.push(key)
-    } else if (key.startsWith(LegacyPersonalNoteStorageKey)) {
-      var name = key.slice(LegacyPersonalNoteStorageKey.length)
-      if (!currentProfile.islandsData[name]) currentProfile.islandsData[name] = {}
-      currentProfile.islandsData[name].PersonalNote = localStorage.getItem(key)
-      keysToRemove.push(key)
-    }
-  }
-
-  if (keysToRemove.length > 0) {
-    saveProfiles()
-    keysToRemove.forEach(key => localStorage.removeItem(key))
-    console.log('Migrated ' + keysToRemove.length + ' legacy storage keys to IslandData')
-  }
-}
-
-migrateLocalStorage()
-
 const map = L.map('map', {
   crs: L.CRS.Simple,
   minZoom: -7,
@@ -41,11 +11,6 @@ const map = L.map('map', {
   zoomSnap: 0.5,
   attributionControl: false
 });
-
-//const bounds = [[-25000, -25000], [25000, 25000]];
-//L.rectangle(bounds, { color: "#ff0044", weight: 1, fillColor: '#3a4466' }).addTo(map)
-//const boundLimit = 15000
-// map.setMaxBounds([[bounds[0][0] - boundLimit * 2, bounds[0][1] - boundLimit], [bounds[1][0] + boundLimit * 2, bounds[1][1] + boundLimit]]);
 
 map.setView([0, 0], Zoom);
 map.getRenderer(map).options.padding = 100;
@@ -67,8 +32,7 @@ Layers.wallLayer.addTo(map);
 Layers.regionLayer.addTo(map);
 
 const borderRadius = 25000
-L.circle([0, 0], {radius: borderRadius, color: "#ff0044", weight: 3, fill: false}).addTo(Layers.regionLayer);
-
+var borderCircleLayer = L.circle([0, 0], {radius: borderRadius, color: getThemeColor("accent"), weight: 3, fill: false, fillColor: "#3a4466", fillOpacity: 1}).addTo(Layers.regionLayer);
 
 L.control.mousePosition({ separator: ',', lngFirst: true, numDigits: -1 }).addTo(map);
 
@@ -154,16 +118,16 @@ function toggleSettings() {
   var modal = document.getElementById('settings-modal')
   if (modal.style.display === 'none') {
     updateProfileSelect()
+    updateThemeSelect()
     modal.style.display = 'flex'
   } else {
     modal.style.display = 'none'
   }
 }
 
-
 function createLegendBiome(name, baseColor, link) {
   return `
-    <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+darkenHexColor(baseColor)+`" stroke-width="3" fill="`+baseColor+`" /> </svg>
+    <svg width="16px" height="16px"> <circle cx="50%" cy="50%" r="40%" stroke="`+shadeColorOKLAB(baseColor, -40)+`" stroke-width="3" fill="`+baseColor+`" /> </svg>
     <a style="color:`+baseColor+`;" target="_blank" href="`+link+`">`+name+`</a>
   `
 }
@@ -175,6 +139,23 @@ function createLegendWall(name, baseColor) {
   `
 }
 
+function getLegendHTML() {
+  return `
+    <div style="margin: 5px;">
+      <b>Biomes:</b></br>
+      `+createLegendBiome("Green Pines", getThemeColor("biome_Green Pines"), "https://lostskies.wiki.gg/wiki/Green_Pines")+`</br>
+      `+createLegendBiome("Azure Grove", getThemeColor("biome_Azure Grove"), "https://lostskies.wiki.gg/wiki/Azure_Grove")+`</br>
+      `+createLegendBiome("Atlas Heights", getThemeColor("biome_Atlas Heights"), "https://lostskies.wiki.gg/")+`</br>
+      `+createLegendBiome("Midlands", getThemeColor("biome_Midlands"), "https://lostskies.wiki.gg/")+`</br>
+
+      </br><b>Walls:</b></br>
+      `+createLegendWall("Wind Wall", getThemeColor("wall_WindRegion1"))+`</br>
+      `+createLegendWall("Wind Wall", getThemeColor("wall_WindRegion2"))+`</br>
+      `+createLegendWall("Storm Wall", getThemeColor("wall_StormRegion4"))+`</br>
+    </div>
+  `
+}
+
 settingOverlay.onAdd = function(map) {
   var div = L.DomUtil.create('div', 'static-overlay');
 
@@ -183,18 +164,7 @@ settingOverlay.onAdd = function(map) {
       <button class="map-button" onclick="toggleSettings();">Settings</button>
       <button class="map-button" onclick="toggleLegend();">Toggle Legend</button>
       <div class="legend-content" style="display: `+ (Settings.LegendOpen ? 'block' : 'none') +`">
-        <div style="margin: 5px;">
-          <b>Biomes:</b></br>
-          `+createLegendBiome("Green Pines", getBiomeColor("Green Pines"), "https://lostskies.wiki.gg/wiki/Green_Pines")+`</br>
-          `+createLegendBiome("Azure Grove", getBiomeColor("Azure Grove"), "https://lostskies.wiki.gg/wiki/Azure_Grove")+`</br>
-          `+createLegendBiome("Atlas Heights", getBiomeColor("Atlas Heights"), "https://lostskies.wiki.gg/")+`</br>
-          `+createLegendBiome("Midlands", getBiomeColor("Midlands"), "https://lostskies.wiki.gg/")+`</br>
-
-          </br><b>Walls:</b></br>
-          `+createLegendWall("Wind Wall", getWallColor("WindRegion1"))+`</br>
-          `+createLegendWall("Wind Wall", getWallColor("WindRegion2"))+`</br>
-          `+createLegendWall("Storm Wall", getWallColor("StormRegion4"))+`</br>
-        </div>
+        ${getLegendHTML()}
       </div>
     </div>
   `
@@ -245,36 +215,37 @@ function parseIslandCSV(csvText) {
     } else {
       createIslandMarker(islandData)
     }
-    
+
   });
 }
 
 function parseRegionCSV(csvText) {
-var csvList = parseCSV(csvText)
+  var csvList = parseCSV(csvText)
   csvList.forEach(values => {
     if (values[0] == '' || !(values[0] == 'wall' || values[0] == 'region')) {
       return
     }
-    
+
     var data = {
       Name: values[1],
       Type: values[2],
       Points: []
     }
 
-    // pair [x, y, x, y...] into [[x, y], [x, y]...] 
+    // pair [x, y, x, y...] into rotated [[x, y], [x, y]...]
     for (let i = 3; i < values.length; i += 2) {
       var [rotatedX, rotatedZ] = rotateXZ(values[i], values[i + 1])
       data.Points.push([rotatedX, rotatedZ]);
     }
-    
+
     if (values[0] == 'wall') {
       createWall(data)
     } else if (values[0] == 'region') {
       createRegion(data)
     }
   });
-  L.circle([0, 0], {radius: 25000, stroke: false, fillColor: '#3a4466', fillOpacity: 1.0 }).addTo(Layers.regionLayer).bringToBack();
+
+  // borderCircleLayer.bringToBack()
 }
 
 function parseCSV(csvText) {
@@ -292,12 +263,13 @@ function parseCSV(csvText) {
 
 function createWall(wallData) {
   var polylineOptions = {
-      color: getWallColor(wallData.Type),
+      color: getThemeColor("wall_" + wallData.Type),
       fill: false,
       interactive : false,
       opacity: 1,
       stroke: true,
-      weight: 10
+      weight: 10,
+      wallType: wallData.Type,
     }
 
     var polyline = L.polyline(wallData.Points, polylineOptions).addTo(Layers.wallLayer);
@@ -305,11 +277,12 @@ function createWall(wallData) {
 
 function createRegion(regionData) {
   var polygonOptions = {
-    color: getBiomeColor(regionData.Type),
+    color: shadeColorOKLAB(getThemeColor("biome_" + regionData.Type), getThemeSetting("regionShadePercent")),
     fill: true,
-    fillOpacity: 0.5,
+    fillOpacity: 1,
     interactive: false,
     stroke: false,
+    biomeType: regionData.Type,
   }
 
   var polygon = L.polygon(regionData.Points, polygonOptions).addTo(Layers.regionLayer).bringToBack();
@@ -325,7 +298,7 @@ function createHeraldSpawnMarker(islandData) {
       popupAnchor: [0, -24],
       className: 'marker',
       html: '<svg width="100%" height="100%">'+
-            '<circle cx="50%" cy="50%" r="16" stroke="'+darkenHexColor(color)+'" stroke-width="3" fill="'+color+'" />'+
+            '<circle cx="50%" cy="50%" r="16" stroke="'+shadeColorOKLAB(color, -40)+'" stroke-width="3" fill="'+color+'" />'+
             '</svg>'
     })
   }
@@ -335,10 +308,10 @@ function createHeraldSpawnMarker(islandData) {
 
 function createIslandMarker(islandData) {
 
-  var biomeColor = (islandData.Biome != '' ? getBiomeColor(islandData.Biome) : '#ffffff')
+  var biomeColor = (islandData.Biome != '' ? getThemeColor("biome_" + islandData.Biome) : '#ffffff')
 
   var fillColor = biomeColor
-  var borderColor = darkenHexColor(biomeColor)
+  var borderColor = shadeColorOKLAB(biomeColor, -40)
 
   var islandDisplayName = islandData.Name.replaceAll('_', ' ')
   var entry = currentProfile.islandsData[islandData.Name] || {}
@@ -346,7 +319,7 @@ function createIslandMarker(islandData) {
   var personalNote = entry.PersonalNote ?? null
 
   if (isVisited) {
-    borderColor = '#ff0044'
+    borderColor = getThemeColor("accent")
   }
 
   var zoomedOutMarkerOptions = {
@@ -410,11 +383,11 @@ function createIslandMarker(islandData) {
   `.replace(/[\r\n\t]/g, '')
   //   <a href="https://docs.google.com/spreadsheets/d/19hqTagUc_mKkPCioP0OQ_Dt7iesC4r_C5nMgRirHO8s" target="_blank">Report missing info</a> or
   //   <a href="https://discord.com/channels/947796968669851659/1363502652373209109" target="_blank">Discuss it on Discord</a>
-  
+
   var popupOptions = {
     minWidth: '320'
   }
-  
+
   zoomedOutMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
   islandMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
   zoomedIslandMarker.bindPopup(popupHtml, popupOptions).on('popupopen', function() {handleIslandPopupOpen(islandData.Name)});
@@ -494,27 +467,6 @@ async function asyncFetch(url) {
   } catch (error) {
     console.error('Error fetching URL:', error);
   }
-}
-
-function getWallColor(region) {
-  var color = "#ff0044"
-  if (region == "WindRegion1") color = "#c0cbdc"
-  if (region == "WindRegion2") color = "#8b9bb4"
-  if (region == "StormRegion4") color = "#124e89"
-  return color
-}
-
-function getBiomeColor(biome) {
-  var color = "#c0cbdc"
-  if (biome == "Green Pines") color = "#63c74d"
-  if (biome == "Azure Grove") color = "#0099db"
-  if (biome == "Atlas Heights") color = "#124e89"
-  if (biome == "Midlands") color = "#262b44"
-  return color
-}
-
-function darkenHexColor(hexString) {
-  return '#' + hexString.replace(/^#/, '').replace(/../g, colorComponent => ('0' + Math.min(255, Math.max(0, parseInt(colorComponent, 16) - 64)).toString(16)).substr(-2));
 }
 
 function onZoomAnim(e) {
