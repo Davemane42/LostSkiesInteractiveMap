@@ -41,6 +41,13 @@
 					<button class="map-button" onclick="clearProfile()">Clear</button>
 				</div>
 			</div>
+				<div class="settings-modal-section">
+					<b>Display</b>
+					<label class="settings-modal-row" style="justify-content: flex-start; cursor: pointer;">
+						<input type="checkbox" id="visitor-counter-toggle" onchange="toggleVisitorCounter(this.checked)">
+						<span>Show visitor counter</span>
+					</label>
+				</div>
 			<div class="settings-modal-section">
 				<b>Theme</b>
 				<div class="settings-modal-row">
@@ -74,5 +81,7 @@
 	<script src="profiles.js"></script>
 	<script src="theme.js"></script>
 	<script src="main.js"></script>
+	<script data-goatcounter="https://lostskiesinteractivemap.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>

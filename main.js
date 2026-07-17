@@ -92,6 +92,7 @@ staticOverlay.onAdd = function(map) {
     <a target="_blank" href="https://github.com/Davemane42/LostSkiesInteractiveMap">
       <img width="48px" src="img/github-mark-white.svg">
     </a>
+    <div id="gc-counter" class="visitor-counter"></div>
   `
   L.DomEvent.disableClickPropagation(div);
   L.DomEvent.disableScrollPropagation(div);
@@ -99,6 +100,38 @@ staticOverlay.onAdd = function(map) {
 };
 
 staticOverlay.addTo(map);
+
+function fetchVisitorCounter() {
+  var counter = document.getElementById('gc-counter')
+  if (!counter) return
+
+  if (!Settings.ShowVisitorCounter) {
+    counter.style.display = 'none'
+    return
+  }
+
+  var url = 'https://lostskiesinteractivemap.goatcounter.com/counter/TOTAL.json'
+  asyncFetch(url).then(function(text) {
+    if (!text) return
+    var data = JSON.parse(text)
+    counter.textContent = data.count + ' hits'
+    counter.style.display = 'block'
+  })
+}
+
+function toggleVisitorCounter(show) {
+  Settings.ShowVisitorCounter = show
+  saveSettings()
+  fetchVisitorCounter()
+}
+
+function updateVisitorCounterToggle() {
+  var toggle = document.getElementById('visitor-counter-toggle')
+  if (toggle) toggle.checked = Settings.ShowVisitorCounter
+}
+
+// Fetch site total once on load.
+fetchVisitorCounter()
 
 var settingOverlay = L.control({
   position: 'topright'
@@ -119,6 +152,7 @@ function toggleSettings() {
   if (modal.style.display === 'none') {
     updateProfileSelect()
     updateThemeSelect()
+    updateVisitorCounterToggle()
     modal.style.display = 'flex'
   } else {
     modal.style.display = 'none'

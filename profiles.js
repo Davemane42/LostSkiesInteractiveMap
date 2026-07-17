@@ -4,8 +4,13 @@ const islandDataVersion = 1
 const profilesStorageKey = "ProfilesData"
 const settingsStorageKey = "Settings"
 
-var Settings = JSON.parse(localStorage.getItem(settingsStorageKey) || '{"LegendOpen": true}')
+var Settings = JSON.parse(localStorage.getItem(settingsStorageKey) || '{"LegendOpen": true, "ShowVisitorCounter": true}')
 var ProfilesData = JSON.parse(localStorage.getItem(profilesStorageKey) || 'null')
+
+if (Settings.ShowVisitorCounter === undefined) {
+  Settings.ShowVisitorCounter = true
+  saveSettings()
+}
 
 if (!ProfilesData) {
   ProfilesData = [{"name": "Default", "lastEdited": 0, "islandsData": {}}]

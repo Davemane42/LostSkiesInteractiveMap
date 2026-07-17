@@ -270,3 +270,17 @@ body,
     padding: 5px;
     font-weight: bolder;
 }
+
+.visitor-counter {
+    display: none;
+    margin-top: 5px;
+    padding: 4px 8px;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
