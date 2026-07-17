@@ -110,7 +110,7 @@ function fetchVisitorCounter() {
     return
   }
 
-  var url = 'https://lostskiesinteractivemap.goatcounter.com/counter/TOTAL.json'
+  var url = 'https://lostskiesinteractivemap.goatcounter.com/counter/' + encodeURIComponent('/LostSkiesInteractiveMap/') + '.json'
   asyncFetch(url).then(function(text) {
     if (!text) return
     var data = JSON.parse(text)
@@ -130,7 +130,6 @@ function updateVisitorCounterToggle() {
   if (toggle) toggle.checked = Settings.ShowVisitorCounter
 }
 
-// Fetch site total once on load.
 fetchVisitorCounter()
 
 var settingOverlay = L.control({
